@@ -18,7 +18,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   await chrome.storage.local.set({ ...DEFAULTS, ...current, mode: 'lite' });
   try { await chrome.contextMenus.removeAll(); } catch {}
   chrome.contextMenus.create({ id: 'ai-hint-selection', title: 'AI Hint Lite', contexts: ['selection'] });
-  for (const [id, title] of [['explain','Объяснить'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
+  for (const [id, title] of [['explain','Объяснить'],['rewrite','Улучшить черновик'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
     chrome.contextMenus.create({ id: `ai-hint-${id}`, parentId: 'ai-hint-selection', title, contexts: ['selection'] });
   }
   if (details.reason === 'install') {
@@ -207,7 +207,7 @@ async function sendToTab(tabId, payload) { try { await chrome.tabs.sendMessage(t
 async function sendError(tabId, requestId, error) { await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: friendlyError(error) }); }
 function normalizeSelection(text) { return String(text || '').replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n').trim(); }
 function applySelectionAction(text, action) {
-  const instructions = { explain: 'Объясни выделенный текст простыми словами.', translate: 'Переведи выделенный текст на настроенный целевой язык, сохрани смысл и тон.', summarize: 'Кратко перескажи главную мысль выделенного текста.', proofread: 'Исправь орфографические и грамматические ошибки. Верни только исправленный текст.' };
+  const instructions = { rewrite: 'Улучши выделенный черновик: сделай его яснее и грамотнее, сохрани смысл и тон. Верни только готовый вариант.', explain: 'Объясни выделенный текст простыми словами.', translate: 'Переведи выделенный текст на настроенный целевой язык, сохрани смысл и тон.', summarize: 'Кратко перескажи главную мысль выделенного текста.', proofread: 'Исправь орфографические и грамматические ошибки. Верни только исправленный текст.' };
   return instructions[action] ? `${instructions[action]}\n\n${text}` : text;
 }
 function applyUserPreferences(prompt, settings, action = '') {

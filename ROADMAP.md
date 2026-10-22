@@ -14,13 +14,14 @@ This is a working list; priorities may change based on feedback.
 - [x] Add a tag-based GitHub Release workflow for reviewed Standard and Lite ZIPs.
 - [x] Add a repeatable release checklist and a troubleshooting guide.
 
-## Shipped in 2.5.1 / Lite 1.2.0
+## Shipped in 2.5.2 / Lite 1.2.0
 
 - [x] Keep a searchable, copyable local history of the latest 40 answers.
 - [x] Add shorter, more detailed, regenerate, why, example, simpler, and copy actions to the answer bubble.
 - [x] Add custom answer instructions, response and translation language, automatic style detection, and bubble themes.
 - [x] Add context-menu actions, bounded page summaries, style shortcuts, provider diagnostics, and a user-triggered API key check.
 - [x] Add configurable selection length limits and CI validation for JS syntax, manifests, and Lite network isolation.
+- [x] Select text in an input, textarea, or editable region to improve, proofread, or translate it, then replace only that selection with the result.
 
 ## Next
 

@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   await chrome.storage.local.set({ ...DEFAULTS, ...current });
   try { await chrome.contextMenus.removeAll(); } catch {}
   chrome.contextMenus.create({ id: 'ai-hint-selection', title: 'AI Hint', contexts: ['selection'] });
-  for (const [id, title] of [['explain','Объяснить'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
+  for (const [id, title] of [['explain','Объяснить'],['rewrite','Улучшить черновик'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
     chrome.contextMenus.create({ id: `ai-hint-${id}`, parentId: 'ai-hint-selection', title, contexts: ['selection'] });
   }
   if (details.reason === 'install') {
@@ -506,6 +506,7 @@ function normalizeSelection(text) {
 
 function applySelectionAction(text, action) {
   const instructions = {
+    rewrite: 'Улучши выделенный черновик: сделай его яснее и грамотнее, сохрани смысл и тон. Верни только готовый вариант.',
     explain: 'Объясни выделенный текст простыми словами.',
     translate: 'Переведи выделенный текст на настроенный целевой язык, сохрани смысл и тон.',
     summarize: 'Кратко перескажи главную мысль выделенного текста.',

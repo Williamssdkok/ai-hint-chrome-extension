@@ -27,6 +27,7 @@ If the shortcut is already in use, set another one at `chrome://extensions/short
 - Choose **Pro** to select a provider, enter your own API key, and grant that provider's optional network access.
 - Set answer depth to Quick, Smart, or Deep.
 - Choose an answer style: **Ordinary**, **Study**, **Code**, or **Translate**.
+- Select text inside a text field, textarea, or editable page area and press `Ctrl+Shift+Space` to improve the draft; use **Improve**, **Fix**, or **Translate** in the bubble, then **Replace selection** to insert the result.
 - In settings, choose the bubble auto-close time and whether to show follow-up buttons.
 - Open the popup and choose **Играть · Математический блиц** to play offline.
 
@@ -38,11 +39,11 @@ AI Hint does not include analytics or telemetry. It reads the text you explicitl
 
 ## Project status
 
-Current version: **2.5.1**. The main AI Hint package combines the local default and optional Pro mode. A separate legacy Lite build is retained for users who want an extension package without any cloud-provider code. See [the roadmap](ROADMAP.md), [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md), and [release checklist](docs/RELEASE.md).
+Current version: **2.5.2**. The main AI Hint package combines the local default and optional Pro mode. A separate legacy Lite build is retained for users who want an extension package without any cloud-provider code. See [the roadmap](ROADMAP.md), [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md), and [release checklist](docs/RELEASE.md).
 
 ## Development
 
-The project is a dependency-free Manifest V3 extension. Each push and pull request validates JavaScript syntax and permission allowlists, builds ZIPs for both editions, and runs a secret scan. On GitHub, download the `ai-hint-editions` artifact from the **Actions** run. To publish versioned ZIPs as a GitHub Release, bump the manifest version, review its package, then push a matching tag such as `v2.5.1`; see [the release checklist](docs/RELEASE.md).
+The project is a dependency-free Manifest V3 extension. Each push and pull request validates JavaScript syntax and permission allowlists, builds ZIPs for both editions, and runs a secret scan. On GitHub, download the `ai-hint-editions` artifact from the **Actions** run. To publish versioned ZIPs as a GitHub Release, bump the manifest version, review its package, then push a matching tag such as `v2.5.2`; see [the release checklist](docs/RELEASE.md).
 
 ## License
 

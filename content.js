@@ -46,21 +46,85 @@
   }, true);
 
   function capture(requestId, action = 'ask') {
+    const editableSelection = readEditableSelection();
     const selection = window.getSelection();
-    const text = selection ? selection.toString().trim() : '';
+    const pageText = selection ? selection.toString() : '';
+    const picked = editableSelection?.text?.trim() ? editableSelection : null;
+    const text = (picked?.text || pageText).trim();
     if (!text) {
       chrome.runtime.sendMessage({ type: 'AIHINT_SELECTED', requestId, text: '', action });
       return;
     }
     let rect = null;
-    try {
+    if (picked?.rect) rect = picked.rect;
+    else try {
       const range = selection.rangeCount ? selection.getRangeAt(0) : null;
       const r = range?.getBoundingClientRect();
       if (r) rect = { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
     } catch {}
-    lastRequest = { requestId, original: text, answer: '' };
+    const inputAction = picked && action === 'ask' ? 'rewrite' : action;
+    lastRequest = { requestId, original: picked?.text || text, answer: '', editable: picked?.target || null, inputAction };
     showBubble({ requestId, rect, loading: true, text: '' });
-    chrome.runtime.sendMessage({ type: 'AIHINT_SELECTED', requestId, text, rect, action });
+    chrome.runtime.sendMessage({ type: 'AIHINT_SELECTED', requestId, text, rect, action: inputAction });
+  }
+
+  function readEditableSelection() {
+    const element = document.activeElement;
+    if (element instanceof HTMLTextAreaElement || (element instanceof HTMLInputElement && /^(text|search|url|tel|email)$/i.test(element.type))) {
+      const start = element.selectionStart, end = element.selectionEnd;
+      if (start === null || end === null || start === end) return null;
+      const text = element.value.slice(start, end);
+      const rect = getCaretRect(element, start, end);
+      return { text, rect, target: { kind: 'input', element, start, end, value: element.value, text } };
+    }
+    const editable = element?.closest?.('[contenteditable="true"],[contenteditable=""],[role="textbox"]');
+    const selection = window.getSelection();
+    if (editable && selection?.rangeCount && !selection.isCollapsed) {
+      const range = selection.getRangeAt(0);
+      if (!editable.contains(range.commonAncestorContainer)) return null;
+      const rect = range.getBoundingClientRect();
+      return { text: selection.toString(), rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }, target: { kind: 'contenteditable', element: editable, range: range.cloneRange(), text: selection.toString() } };
+    }
+    return null;
+  }
+
+  function getCaretRect(element, start, end) {
+    const rect = element.getBoundingClientRect();
+    const style = getComputedStyle(element);
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5 || 20;
+    const text = element.value.slice(0, start);
+    const lines = text.split('\n');
+    const line = lines.length - 1;
+    const top = rect.top + Math.min(rect.height - lineHeight, line * lineHeight) - element.scrollTop;
+    const left = rect.left + 8 - element.scrollLeft;
+    return { left, top, right: Math.min(rect.right, left + 180), bottom: top + lineHeight, width: 180, height: lineHeight };
+  }
+
+  function replaceEditableSelection() {
+    const target = lastRequest?.editable;
+    const replacement = lastRequest?.answer;
+    if (!target || !replacement || !target.element?.isConnected) return false;
+    if (target.kind === 'input') {
+      const { element, start, end, text, value } = target;
+      if (element.value !== value || element.value.slice(start, end) !== text) return false;
+      element.focus();
+      element.setRangeText(replacement, start, end, 'end');
+      element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertReplacementText', data: replacement }));
+      return true;
+    }
+    if (target.kind === 'contenteditable') {
+      const { element, range, text } = target;
+      if (!element.contains(range.commonAncestorContainer) || range.toString() !== text) return false;
+      element.focus();
+      range.deleteContents();
+      const node = document.createTextNode(replacement);
+      range.insertNode(node);
+      range.setStartAfter(node); range.collapse(true);
+      const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range);
+      element.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertReplacementText', data: replacement }));
+      return true;
+    }
+    return false;
   }
 
   function capturePage(requestId, maxChars = 4000) {
@@ -177,7 +241,21 @@
 
   function addActions(container, showFollowups = true) {
     if (!lastRequest?.original) return;
-    if (showFollowups) {
+    if (lastRequest.editable) {
+      const insert = document.createElement('button'); insert.className = 'btn primary-action'; insert.textContent = 'Заменить выделение';
+      insert.addEventListener('click', () => {
+        if (replaceEditableSelection()) { insert.textContent = 'Вставлено ✓'; setTimeout(() => { if (insert.isConnected) insert.textContent = 'Заменить выделение'; }, 1200); }
+        else insert.textContent = 'Поле изменилось — выдели текст заново';
+      });
+      container.appendChild(insert);
+      const edits = [['rewrite','Улучшить'],['proofread','Исправить'],['translate','Перевести']];
+      for (const [action, label] of edits) {
+        const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = label;
+        btn.addEventListener('click', () => runEditableAction(action));
+        container.appendChild(btn);
+      }
+    }
+    if (showFollowups && !lastRequest.editable) {
       const items = [['why','Почему?'],['example','Пример'],['simpler','Проще'],['shorter','Короче'],['detailed','Подробнее'],['regenerate','Заново']];
       for (const [action, label] of items) {
         const btn = document.createElement('button'); btn.className = 'btn'; btn.textContent = label;
@@ -198,6 +276,15 @@
       try { await navigator.clipboard.writeText(answer); copy.textContent = 'Готово ✓'; setTimeout(() => copy.textContent = 'Копировать', 900); } catch {}
     });
     container.appendChild(copy);
+  }
+
+  function runEditableAction(action) {
+    if (!lastRequest?.editable) return;
+    const requestId = crypto.randomUUID();
+    lastRequest = { ...lastRequest, requestId, answer: '', inputAction: action };
+    current = { requestId, rect: current?.rect || null, source: 'LOCAL', showFollowups: false, mode: current?.mode || 'lite', bubbleTheme: current?.bubbleTheme || 'auto' };
+    showBubble({ requestId, rect: current.rect, loading: true, bubbleTheme: current.bubbleTheme });
+    chrome.runtime.sendMessage({ type: 'AIHINT_SELECTED', requestId, text: lastRequest.original, action });
   }
 
   function position(wrap, rect) {
