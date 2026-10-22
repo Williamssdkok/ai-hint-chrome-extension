@@ -3,6 +3,7 @@ import { DEFAULTS, providerLabel } from './shared-defaults.js';
 const modeTitle = document.querySelector('#modeTitle');
 const modeStatus = document.querySelector('#modeStatus');
 const modeToggle = document.querySelector('#modeToggle');
+const modeCard = document.querySelector('#modeCard');
 const depth = document.querySelector('#depth');
 const status = document.querySelector('#status');
 
@@ -18,6 +19,7 @@ let settings;
 
 function render(){
   const lite = settings.mode === 'lite';
+  modeCard.classList.toggle('pro', !lite);
   modeTitle.textContent = lite ? 'AI HINT LITE' : 'AI HINT PRO';
   modeStatus.textContent = lite ? 'LOCAL · Chrome AI' : `${label(settings.provider)} · API`;
   modeToggle.textContent = lite ? 'PRO' : 'LITE';

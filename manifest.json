@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Hint",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "A tiny, fast AI helper for selected text. Lite runs on-device with Chrome's built-in AI; Pro connects to your own provider API key.",
   "minimum_chrome_version": "138",
   "permissions": [

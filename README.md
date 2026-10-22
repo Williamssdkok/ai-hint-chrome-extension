@@ -2,8 +2,6 @@
 
 **A small, fast helper for selected text in Chrome.** Select a short fragment, press `Ctrl+Shift+Space`, and get a concise answer beside the text.
 
-![AI Hint popup](assets/screenshots/popup.png)
-
 AI Hint has two modes:
 
 - **Lite** uses Chrome's built-in on-device AI when the browser and device support it. The selected text stays on the device for this mode.
@@ -37,7 +35,7 @@ AI Hint does not include analytics or telemetry. It reads the text you explicitl
 
 ## Project status
 
-Current version: **2.2.0**. See [the roadmap](ROADMAP.md) for planned work and [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md) for listing copy and the submission checklist.
+Current version: **2.2.1**. See [the roadmap](ROADMAP.md) for planned work and [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md) for listing copy and the submission checklist.
 
 ## Development
 

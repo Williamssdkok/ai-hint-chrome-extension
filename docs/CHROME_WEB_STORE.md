@@ -20,7 +20,7 @@ AI Hint reads selected text only after you invoke it. In Lite, the text is proce
 - [ ] Confirm the store listing, single purpose, category, languages, support contact, and distribution countries.
 - [ ] Host the privacy policy at a stable public URL and enter that URL in the dashboard.
 - [ ] Complete the dashboard's data-use declarations accurately: selected website text is user content; Lite sends it to Chrome's on-device model; Pro sends it to the selected provider; API keys and settings are stored locally; no analytics or advertising are used.
-- [ ] Provide at least one actual product screenshot at 1280×800 or 640×400 (up to five). The popup screenshot in `assets/screenshots/popup.png` is included for the README, but its current source image is 605×483 and does not meet the store screenshot dimensions. Capture a full-size screenshot from Chrome before submitting.
+- [ ] Provide at least one current product screenshot at 1280×800 or 640×400 (up to five). The screenshot in `assets/screenshots/popup.png` shows the previous 2.2.0 popup design, measures 605×483, and does not meet the store screenshot dimensions. Capture a full-size screenshot of the refreshed UI in Chrome before submitting.
 - [ ] Review the ZIP produced by the GitHub Actions build and upload it in the developer dashboard.
 - [ ] Review all metadata, privacy disclosures, and screenshots side by side for accuracy, then submit the listing for Google's review.
 
