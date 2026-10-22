@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7ff">
+  <title>Математический блиц — AI Hint</title>
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <main class="game">
+    <header>
+      <a class="brand" href="popup.html" aria-label="AI Hint"><span>✦</span> AI HINT</a>
+      <span class="local">ИГРА · OFFLINE</span>
+    </header>
+    <section class="intro">
+      <p class="eyebrow">МАЛЕНЬКАЯ ПАУЗА ДЛЯ МОЗГА</p>
+      <h1>Математический<br><em>блиц</em></h1>
+      <p class="description">Решай примеры, набирай очки и побей свой рекорд. У тебя 60 секунд.</p>
+    </section>
+    <section class="stats" aria-label="Статистика игры">
+      <div><span>ВРЕМЯ</span><strong id="time">60</strong></div>
+      <div><span>СЧЁТ</span><strong id="score">0</strong></div>
+      <div><span>РЕКОРД</span><strong id="best">0</strong></div>
+    </section>
+    <section class="arena" aria-live="polite">
+      <p class="hint" id="hint">Готов проверить скорость?</p>
+      <div class="question" id="question">3 × 4 = ?</div>
+      <div class="answers" id="answers">
+        <button class="answer" data-index="0" disabled>—</button>
+        <button class="answer" data-index="1" disabled>—</button>
+        <button class="answer" data-index="2" disabled>—</button>
+        <button class="answer" data-index="3" disabled>—</button>
+      </div>
+      <button class="start" id="start">Начать игру <span>→</span></button>
+      <p class="keys">Можно отвечать клавишами <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd></p>
+    </section>
+    <footer>Только локальная игра. Рекорд хранится в этом браузере.</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
