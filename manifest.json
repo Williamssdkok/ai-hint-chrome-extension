@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Hint",
-  "version": "2.6.1",
+  "version": "2.6.2",
   "description": "Get fast answers about selected text, summarize pages, and save a searchable local answer history.",
   "minimum_chrome_version": "138",
   "permissions": [

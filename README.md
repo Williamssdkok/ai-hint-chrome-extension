@@ -40,11 +40,11 @@ AI Hint does not include analytics or telemetry. It reads the text you explicitl
 
 ## Project status
 
-Current version: **2.6.1**. The main AI Hint package combines the local default and optional Pro mode. A separate legacy Lite build is retained for users who want an extension package without any cloud-provider code. See [the roadmap](ROADMAP.md), [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md), and [release checklist](docs/RELEASE.md).
+Current version: **2.6.2**. The main AI Hint package combines the local default and optional Pro mode. A separate legacy Lite build is retained for users who want an extension package without any cloud-provider code. See [the roadmap](ROADMAP.md), [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md), and [release checklist](docs/RELEASE.md).
 
 ## Development
 
-The project is a dependency-free Manifest V3 extension. Each push and pull request validates JavaScript syntax and permission allowlists, builds ZIPs for both editions, and runs a secret scan. On GitHub, download the `ai-hint-editions` artifact from the **Actions** run. To publish versioned ZIPs as a GitHub Release, bump the manifest version, review its package, then push a matching tag such as `v2.6.1`; see [the release checklist](docs/RELEASE.md).
+The project is a dependency-free Manifest V3 extension. Each push and pull request validates JavaScript syntax and permission allowlists, builds ZIPs for both editions, and runs a secret scan. On GitHub, download the `ai-hint-editions` artifact from the **Actions** run. To publish versioned ZIPs as a GitHub Release, bump the manifest version, review its package, then push a matching tag such as `v2.6.2`; see [the release checklist](docs/RELEASE.md).
 
 ## License
 
