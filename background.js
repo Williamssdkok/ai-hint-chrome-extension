@@ -18,15 +18,17 @@ let baseSession = null;
 let baseSessionPromise = null;
 let activeRequests = new Map();
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   const current = await chrome.storage.local.get(DEFAULTS);
   await chrome.storage.local.set({ ...DEFAULTS, ...current });
   try { await chrome.contextMenus.removeAll(); } catch {}
-  chrome.contextMenus.create({
-    id: 'ai-hint-selection',
-    title: 'AI Hint — спросить о выделенном',
-    contexts: ['selection']
-  });
+  chrome.contextMenus.create({ id: 'ai-hint-selection', title: 'AI Hint', contexts: ['selection'] });
+  for (const [id, title] of [['explain','Объяснить'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
+    chrome.contextMenus.create({ id: `ai-hint-${id}`, parentId: 'ai-hint-selection', title, contexts: ['selection'] });
+  }
+  if (details.reason === 'install') {
+    await chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html?edition=standard') });
+  }
 });
 
 chrome.runtime.onStartup?.addListener(() => {
@@ -69,19 +71,20 @@ async function openOptions() {
 // default_popup, so Chrome never fires onClicked for the toolbar icon.
 // Options are reachable from the popup's "Настройки" button instead.
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== 'ai-hint-selection' || !tab?.id) return;
-  await invokeForTab(tab.id);
+  if (!tab?.id || !String(info.menuItemId).startsWith('ai-hint-')) return;
+  await invokeForTab(tab.id, String(info.menuItemId).replace('ai-hint-', '') === 'selection' ? 'ask' : String(info.menuItemId).replace('ai-hint-', ''));
 });
 chrome.commands.onCommand.addListener(async (command, tab) => {
-  if (command !== 'ask-hint' || !tab?.id) return;
-  await invokeForTab(tab.id);
+  const style = { 'style-balanced': 'balanced', 'style-study': 'study', 'style-code': 'code', 'style-translate': 'translate' }[command];
+  if (style) { await chrome.storage.local.set({ answerStyle: style }); return; }
+  if (command === 'ask-hint' && tab?.id) await invokeForTab(tab.id);
 });
 
-async function invokeForTab(tabId) {
+async function invokeForTab(tabId, action = 'ask') {
   const requestId = crypto.randomUUID();
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
-    await chrome.tabs.sendMessage(tabId, { type: 'AIHINT_CAPTURE', requestId });
+    await chrome.tabs.sendMessage(tabId, { type: 'AIHINT_CAPTURE', requestId, action });
   } catch (error) {
     try {
       await chrome.tabs.sendMessage(tabId, {
@@ -94,7 +97,16 @@ async function invokeForTab(tabId) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!message || !sender.tab?.id) return;
+  if (!message) return;
+  if (message.type === 'AIHINT_TEST_PROVIDER') {
+    testProvider(sendResponse);
+    return true;
+  }
+  if (message.type === 'AIHINT_GET_STATUS') {
+    getLiteStatus().then(sendResponse).catch(() => sendResponse({ available: false, state: 'error' }));
+    return true;
+  }
+  if (!sender.tab?.id) return;
   if (message.type === 'AIHINT_SELECTED') {
     handleSelected(sender.tab.id, message).catch(async (error) => {
       await sendToTab(sender.tab.id, {
@@ -116,30 +128,48 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'AIHINT_STATUS') {
     // reserved for future diagnostics
   }
-  if (message.type === 'AIHINT_GET_STATUS') {
-    getLiteStatus().then(sendResponse).catch(() => sendResponse({ available: false, state: 'error' }));
-    return true;
-  }
   if (message.type === 'AIHINT_OPEN_OPTIONS') {
     openOptions();
   }
 });
 
+async function testProvider(sendResponse) {
+  try {
+    const settings = await getSettings();
+    const provider = settings.provider;
+    const key = settings.keys?.[provider];
+    if (!key) throw new Error(`Сначала добавь ключ ${providerLabel(provider)} в настройках.`);
+    await ensureProviderPermission(provider);
+    const controller = new AbortController();
+    await fetchProvider(provider, key, settings.models?.[provider], 'Ответь только словом OK.', 'short', 'balanced', controller.signal);
+    sendResponse({ ok: true, message: `Связь с ${providerLabel(provider)} работает.` });
+  } catch (error) {
+    sendResponse({ ok: false, message: friendlyError(error) });
+  }
+}
+
 async function handleSelected(tabId, message) {
   const requestId = message.requestId;
-  const text = normalizeSelection(message.text);
+  const selected = normalizeSelection(message.text);
+  if (!selected) {
+    await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: 'Сначала выдели текст.' });
+    return;
+  }
+  const text = applySelectionAction(selected, message.action);
   if (!text) {
     await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: 'Сначала выдели текст.' });
     return;
   }
-  if (text.length > 12000) {
-    await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: 'Слишком большой фрагмент. Выдели короче — AI Hint работает именно с небольшими фрагментами.' });
+  const settings = await getSettings();
+  const maxChars = Math.max(500, Math.min(12000, Number(settings.maxSelectionChars) || 4000));
+  if (selected.length > maxChars) {
+    await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: `Выделено ${selected.length} символов, лимит — ${maxChars}. Уменьши выделение или измени лимит в настройках, чтобы контролировать расходы.` });
     return;
   }
-
-  const settings = await getSettings();
-  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId, text, rect: message.rect, mode: settings.mode, autoCloseMs: settings.autoCloseMs, showFollowups: settings.showFollowups });
-  await runRequest(tabId, requestId, text, 'answer');
+  const requestSettings = resolveAnswerStyle(settings, selected);
+  const personalizedText = applyUserPreferences(text, requestSettings, message.action);
+  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId, text: selected, rect: message.rect, mode: requestSettings.mode, autoCloseMs: requestSettings.autoCloseMs, showFollowups: requestSettings.showFollowups, bubbleTheme: requestSettings.bubbleTheme });
+  await runRequest(tabId, requestId, personalizedText, 'answer', selected, requestSettings);
 }
 
 async function handleFollowup(tabId, message) {
@@ -147,7 +177,10 @@ async function handleFollowup(tabId, message) {
   const original = normalizeSelection(message.original);
   const action = String(message.action || 'why');
   if (!original) return;
-  if (original.length > 12000) {
+  const settings = await getSettings();
+  const requestSettings = resolveAnswerStyle(settings, original);
+  const maxChars = Math.max(500, Math.min(12000, Number(settings.maxSelectionChars) || 4000));
+  if (original.length > maxChars) {
     await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: 'Слишком большой фрагмент для уточнения.' });
     return;
   }
@@ -155,7 +188,10 @@ async function handleFollowup(tabId, message) {
     why: 'Объясни почему это так. Коротко, максимум 3 предложения.',
     example: 'Дай один очень короткий пример.',
     simpler: 'Объясни ещё проще, как человеку без подготовки.',
-    translate: 'Переведи исходный текст на русский, сохрани смысл и краткость.'
+    translate: 'Переведи исходный текст на указанный целевой язык, сохрани смысл и краткость.',
+    shorter: 'Сократи предыдущий ответ до одной короткой фразы.',
+    detailed: 'Раскрой предыдущий ответ подробнее, добавь только важные детали.',
+    regenerate: 'Ответь на тот же вопрос заново, другими словами.'
   }[action] || 'Уточни ответ кратко.';
   // Include the answer already shown to the user (when we have it) so the
   // follow-up stays consistent with it instead of re-deriving the answer
@@ -164,19 +200,21 @@ async function handleFollowup(tabId, message) {
   const context = previousAnswer
     ? `Исходный фрагмент:\n${original}\n\nТвой предыдущий ответ:\n${previousAnswer}`
     : `Исходный фрагмент:\n${original}`;
-  const settings = await getSettings();
-  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId, text: original, mode: settings.mode, autoCloseMs: settings.autoCloseMs, showFollowups: settings.showFollowups });
-  await runRequest(tabId, requestId, `${instruction}\n\n${context}`, action);
+  const target = requestSettings.translateLanguage || 'ru';
+  const localizedInstruction = action === 'translate' ? `Переведи исходный текст на язык «${languageLabel(target)}», сохрани смысл и краткость.` : instruction;
+  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId, text: original, mode: requestSettings.mode, autoCloseMs: requestSettings.autoCloseMs, showFollowups: requestSettings.showFollowups, bubbleTheme: requestSettings.bubbleTheme });
+  await runRequest(tabId, requestId, applyUserPreferences(`${localizedInstruction}\n\n${context}`, requestSettings, action), action, undefined, requestSettings);
 }
 
-async function runRequest(tabId, requestId, prompt, kind) {
-  const settings = await getSettings();
+async function runRequest(tabId, requestId, prompt, kind, quickInput = prompt, settingsOverride = null) {
+  const settings = settingsOverride || await getSettings();
   const controller = new AbortController();
   activeRequests.set(requestId, controller);
   try {
-    const quick = tryQuickAnswer(prompt);
+    const quick = tryQuickAnswer(quickInput);
     if (quick !== null && kind === 'answer') {
       await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: quick, source: 'instant', mode: settings.mode, autoCloseMs: settings.autoCloseMs, done: true });
+      await saveHistory(prompt, quick, 'instant', settings.historyLimit);
       return;
     }
 
@@ -221,6 +259,7 @@ async function runLite(tabId, requestId, prompt, settings, signal) {
     }
     answer = cleanAnswer(answer);
     await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer, source: 'local', mode: 'lite', autoCloseMs: settings.autoCloseMs, done: true });
+    await saveHistory(prompt, answer, 'local', settings.historyLimit);
   } finally {
     try { session.destroy(); } catch {}
   }
@@ -231,7 +270,7 @@ async function getBaseSession(settings) {
   if (!baseSessionPromise) {
     baseSessionPromise = (async () => {
       const options = {
-        initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT + depthInstruction(settings.depth) + styleInstruction(settings.answerStyle) }],
+        initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT + depthInstruction(settings.depth) }],
         ...(await samplingParams())
       };
       const session = await LanguageModel.create(options);
@@ -285,8 +324,11 @@ async function runPro(tabId, requestId, prompt, settings, signal) {
     return;
   }
   await ensureProviderPermission(provider);
-  const answer = await fetchProvider(provider, key, settings.models?.[provider], prompt, settings.depth, settings.answerStyle, signal);
-  await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: cleanAnswer(answer), source: provider, mode: 'pro', autoCloseMs: settings.autoCloseMs, done: true });
+  const answer = await fetchProvider(provider, key, settings.models?.[provider], prompt, settings.depth, settings.answerStyle, signal,
+    partial => sendToTab(tabId, { type: 'AIHINT_STREAM', requestId, answer: partial, source: provider, mode: 'pro', autoCloseMs: settings.autoCloseMs }));
+  const cleaned = cleanAnswer(answer);
+  await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: cleaned, source: provider, mode: 'pro', autoCloseMs: settings.autoCloseMs, done: true });
+  await saveHistory(prompt, cleaned, provider, settings.historyLimit);
 }
 
 async function ensureProviderPermission(provider) {
@@ -296,7 +338,7 @@ async function ensureProviderPermission(provider) {
   if (!granted) throw new Error(`Chrome ещё не разрешил сетевой доступ к ${providerLabel(provider)}. Открой настройки и включи провайдера.`);
 }
 
-async function fetchProvider(provider, key, model, prompt, depth, answerStyle, signal) {
+async function fetchProvider(provider, key, model, prompt, depth, answerStyle, signal, onChunk) {
   const system = SYSTEM_PROMPT + depthInstruction(depth) + styleInstruction(answerStyle);
   const maxTokens = depth === 'deep' ? 700 : depth === 'short' ? 180 : 360;
   const retryable = new Set([429, 500, 502, 503, 504]);
@@ -304,7 +346,7 @@ async function fetchProvider(provider, key, model, prompt, depth, answerStyle, s
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       if (provider === 'openai') {
-        return await openAi(key, model, system, prompt, maxTokens, signal);
+        return await openAi(key, model, system, prompt, maxTokens, signal, onChunk);
       }
       if (provider === 'gemini') {
         return await gemini(key, model, system, prompt, maxTokens, signal);
@@ -330,8 +372,48 @@ async function fetchProvider(provider, key, model, prompt, depth, answerStyle, s
   throw new Error('Провайдер не ответил.');
 }
 
-async function openAi(key, model, system, prompt, maxTokens, signal) {
+async function openAi(key, model, system, prompt, maxTokens, signal, onChunk) {
+  if (onChunk) return openAiStreaming(key, model, system, prompt, maxTokens, signal, onChunk);
   return openAiCompatible('https://api.openai.com/v1/chat/completions', 'Bearer ' + key, model, system, prompt, maxTokens, signal);
+}
+
+async function openAiStreaming(key, model, system, prompt, maxTokens, signal, onChunk) {
+  const response = await fetchWithTimeout('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+    body: JSON.stringify({ model: model || 'gpt-5-mini', messages: [{ role: 'system', content: system }, { role: 'user', content: prompt }], max_tokens: maxTokens, temperature: 0.2, stream: true }),
+    signal
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw apiError(response.status, data?.error?.message || 'OpenAI API error');
+  }
+  if (!response.body) throw new Error('Потоковый ответ недоступен.');
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', answer = '';
+  while (true) {
+    const { value, done } = await reader.read();
+    buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+    const lines = buffer.split(/\r?\n/);
+    const tail = lines.pop() || '';
+    buffer = done ? '' : tail;
+    if (done && tail) lines.push(tail);
+    for (const line of lines) {
+      if (!line.startsWith('data:')) continue;
+      const payload = line.slice(5).trim();
+      if (!payload || payload === '[DONE]') continue;
+      let packet;
+      try { packet = JSON.parse(payload); } catch { continue; }
+      if (packet?.error?.message) throw new Error(packet.error.message);
+      const token = packet?.choices?.[0]?.delta?.content || '';
+      if (token) { answer += token; await onChunk(cleanAnswer(answer)); }
+    }
+    if (done) break;
+    if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  }
+  if (!answer.trim()) throw new Error('OpenAI вернул пустой ответ.');
+  return cleanAnswer(answer);
 }
 
 async function openAiCompatible(url, auth, model, system, prompt, maxTokens, signal) {
@@ -422,6 +504,42 @@ function normalizeSelection(text) {
   return String(text || '').replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n').trim();
 }
 
+function applySelectionAction(text, action) {
+  const instructions = {
+    explain: 'Объясни выделенный текст простыми словами.',
+    translate: 'Переведи выделенный текст на настроенный целевой язык, сохрани смысл и тон.',
+    summarize: 'Кратко перескажи главную мысль выделенного текста.',
+    proofread: 'Исправь орфографические и грамматические ошибки. Верни только исправленный текст.'
+  };
+  return instructions[action] ? `${instructions[action]}\n\n${text}` : text;
+}
+
+async function saveHistory(prompt, answer, source, limit = 40) {
+  if (!answer) return;
+  const { history = [] } = await chrome.storage.local.get({ history: [] });
+  history.unshift({ id: crypto.randomUUID(), prompt: String(prompt).slice(0, 4000), answer: String(answer).slice(0, 8000), source, createdAt: Date.now() });
+  await chrome.storage.local.set({ history: history.slice(0, Math.max(1, Math.min(50, Number(limit) || 40))) });
+}
+
+function applyUserPreferences(prompt, settings, action = '') {
+  const instructions = [];
+  if (settings.answerStyle === 'custom' && settings.customPrompt?.trim()) instructions.push(settings.customPrompt.trim().slice(0, 1000));
+  if (action === 'translate' || settings.answerStyle === 'translate') instructions.push(`Целевой язык перевода: ${languageLabel(settings.translateLanguage || 'ru')}.`);
+  else if (settings.responseLanguage && settings.responseLanguage !== 'auto') instructions.push(`Отвечай на языке: ${languageLabel(settings.responseLanguage)}.`);
+  return instructions.length ? `${instructions.join('\n')}\n\n${prompt}` : prompt;
+}
+
+function languageLabel(value) { return ({ru:'русский',en:'английский',es:'испанский',de:'немецкий',fr:'французский'})[value] || value; }
+
+function resolveAnswerStyle(settings, text) {
+  if (settings.answerStyle !== 'auto') return settings;
+  const value = String(text || '');
+  const codeLike = /(?:\b(?:const|let|var|function|class|return|import|export|def|print)\b|=>|[{};]{2,}|<\/?[a-z][^>]*>)/i.test(value);
+  const hasCyrillic = /[А-Яа-яЁё]/.test(value);
+  const words = value.trim().split(/\s+/).length;
+  return { ...settings, answerStyle: codeLike ? 'code' : !hasCyrillic && words >= 3 && /[A-Za-z]/.test(value) ? 'translate' : 'balanced' };
+}
+
 function buildPrompt(prompt, depth, answerStyle) {
   return `${depthInstruction(depth)}${styleInstruction(answerStyle)}\n\nUser request / selected text:\n${prompt}`;
 }
@@ -429,7 +547,7 @@ function buildPrompt(prompt, depth, answerStyle) {
 function styleInstruction(style) {
   if (style === 'study') return '\nTeach like a patient tutor: explain the key idea in simple language and guide the user through the reasoning. For homework, prefer a hint before giving a full solution.';
   if (style === 'code') return '\nFor programming questions, identify the exact issue and give the smallest useful fix. Include a short code snippet only when it helps.';
-  if (style === 'translate') return '\nTranslate the selected text into Russian while preserving its meaning and tone. If the user explicitly requests another target language, use that language.';
+  if (style === 'translate') return '\nTranslate the selected text into the configured target language while preserving meaning and tone.';
   return '';
 }
 

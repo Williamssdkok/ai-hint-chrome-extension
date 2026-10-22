@@ -28,6 +28,9 @@ button { -webkit-tap-highlight-color: transparent; }
   background: linear-gradient(145deg, #7887ff, #5267ec);
   box-shadow: 0 6px 14px rgba(83, 104, 245, .25);
 }
+.mascot { position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,.8); background: radial-gradient(circle at 50% 72%, #ffe9f2 0 24%, transparent 25%), linear-gradient(145deg,#a9b7ff,#6674ed); }
+.mascot::before { content:""; position:absolute; top:5px; left:8px; width:22px; height:21px; border-radius:52% 52% 44% 44%; background:#292d4d; box-shadow:-3px 5px 0 -1px #292d4d,3px 5px 0 -1px #292d4d; }
+.mascot-face { position:relative; z-index:1; margin-top:5px; color:#fff; font-size:11px; animation:mascot-think 2.6s ease-in-out infinite; }
 .brand-copy { min-width: 0; }
 .name { font-size: 13px; font-weight: 850; letter-spacing: .13em; }
 .sub { margin-top: 3px; color: var(--muted); font-size: 10px; letter-spacing: -.01em; }
@@ -89,6 +92,8 @@ select:focus-visible { border-color: #aeb8ff; box-shadow: 0 0 0 3px rgba(83,104,
 .button-arrow { margin-left: auto; font-size: 15px; opacity: .8; }
 .primary-caption { margin: 8px 2px 13px; color: #8992a6; font-size: 9px; }
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.page-action { margin-bottom: 8px; }
+.history-action { grid-column: 1 / -1; }
 .secondary {
   gap: 8px; min-height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 12px;
   color: #48536d; background: rgba(255,255,255,.76); font-size: 9px; font-weight: 700; text-align: left;
@@ -106,3 +111,4 @@ footer { display: flex; align-items: center; justify-content: center; gap: 4px; 
   .status-dot { animation: none; }
 }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 3px #e5f7ef; } 50% { box-shadow: 0 0 0 5px #e5f7ef; } }
+@keyframes mascot-think { 0%,100% { transform:translateY(0) rotate(-7deg); } 50% { transform:translateY(-2px) rotate(7deg); } }

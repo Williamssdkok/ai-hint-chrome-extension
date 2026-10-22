@@ -13,11 +13,17 @@ let baseSession = null;
 let baseSessionPromise = null;
 const activeRequests = new Map();
 
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async (details) => {
   const current = await chrome.storage.local.get(DEFAULTS);
   await chrome.storage.local.set({ ...DEFAULTS, ...current, mode: 'lite' });
   try { await chrome.contextMenus.removeAll(); } catch {}
-  chrome.contextMenus.create({ id: 'ai-hint-selection', title: 'AI Hint Lite — спросить о выделенном', contexts: ['selection'] });
+  chrome.contextMenus.create({ id: 'ai-hint-selection', title: 'AI Hint Lite', contexts: ['selection'] });
+  for (const [id, title] of [['explain','Объяснить'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
+    chrome.contextMenus.create({ id: `ai-hint-${id}`, parentId: 'ai-hint-selection', title, contexts: ['selection'] });
+  }
+  if (details.reason === 'install') {
+    await chrome.tabs.create({ url: chrome.runtime.getURL('welcome.html?edition=lite') });
+  }
 });
 
 chrome.runtime.onStartup?.addListener(() => {
@@ -44,17 +50,19 @@ async function getSettings() {
 }
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId === 'ai-hint-selection' && tab?.id) await invokeForTab(tab.id);
+  if (String(info.menuItemId).startsWith('ai-hint-') && tab?.id) await invokeForTab(tab.id, String(info.menuItemId).replace('ai-hint-', '') === 'selection' ? 'ask' : String(info.menuItemId).replace('ai-hint-', ''));
 });
 chrome.commands.onCommand.addListener(async (command, tab) => {
+  const style = { 'style-balanced': 'balanced', 'style-study': 'study', 'style-code': 'code', 'style-translate': 'translate' }[command];
+  if (style) { await chrome.storage.local.set({ answerStyle: style }); return; }
   if (command === 'ask-hint' && tab?.id) await invokeForTab(tab.id);
 });
 
-async function invokeForTab(tabId) {
+async function invokeForTab(tabId, action = 'ask') {
   const requestId = crypto.randomUUID();
   try {
     await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] });
-    await chrome.tabs.sendMessage(tabId, { type: 'AIHINT_CAPTURE', requestId });
+    await chrome.tabs.sendMessage(tabId, { type: 'AIHINT_CAPTURE', requestId, action });
   } catch {
     try {
       await chrome.tabs.sendMessage(tabId, {
@@ -81,39 +89,51 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function handleSelected(tabId, message) {
-  const text = normalizeSelection(message.text);
+  const selected = normalizeSelection(message.text);
+  if (!selected) return sendToTab(tabId, { type: 'AIHINT_ERROR', requestId: message.requestId, message: 'Сначала выдели текст.' });
+  const text = applySelectionAction(selected, message.action);
   if (!text) return sendToTab(tabId, { type: 'AIHINT_ERROR', requestId: message.requestId, message: 'Сначала выдели текст.' });
-  if (text.length > 12000) return sendToTab(tabId, { type: 'AIHINT_ERROR', requestId: message.requestId, message: 'Слишком большой фрагмент. Выдели текст покороче.' });
   const settings = await getSettings();
-  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId: message.requestId, text, rect: message.rect, mode: 'lite', autoCloseMs: settings.autoCloseMs, showFollowups: settings.showFollowups });
-  await runRequest(tabId, message.requestId, text, 'answer');
+  const maxChars = Math.max(500, Math.min(12000, Number(settings.maxSelectionChars) || 4000));
+  if (selected.length > maxChars) return sendToTab(tabId, { type: 'AIHINT_ERROR', requestId: message.requestId, message: `Выделено ${selected.length} символов, лимит — ${maxChars}. Сократи фрагмент или подними лимит в настройках.` });
+  const requestSettings = resolveAnswerStyle(settings, selected);
+  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId: message.requestId, text: selected, rect: message.rect, mode: 'lite', autoCloseMs: requestSettings.autoCloseMs, showFollowups: requestSettings.showFollowups, bubbleTheme: requestSettings.bubbleTheme });
+  await runRequest(tabId, message.requestId, applyUserPreferences(text, requestSettings, message.action), 'answer', selected, requestSettings);
 }
 
 async function handleFollowup(tabId, message) {
   const original = normalizeSelection(message.original);
   if (!original) return;
-  if (original.length > 12000) return sendToTab(tabId, { type: 'AIHINT_ERROR', requestId: message.requestId, message: 'Слишком большой фрагмент для уточнения.' });
+  const settings = await getSettings();
+  const requestSettings = resolveAnswerStyle(settings, original);
+  const maxChars = Math.max(500, Math.min(12000, Number(settings.maxSelectionChars) || 4000));
+  if (original.length > maxChars) return sendToTab(tabId, { type: 'AIHINT_ERROR', requestId: message.requestId, message: `Выделено ${original.length} символов, лимит — ${maxChars}. Сократи фрагмент или подними лимит в настройках.` });
   const instruction = {
     why: 'Объясни почему это так. Коротко, максимум 3 предложения.',
     example: 'Дай один очень короткий пример.',
     simpler: 'Объясни ещё проще, как человеку без подготовки.',
-    translate: 'Переведи исходный текст на русский, сохрани смысл и краткость.'
+    translate: 'Переведи исходный текст на выбранный целевой язык, сохрани смысл и краткость.',
+    shorter: 'Сократи предыдущий ответ до одной короткой фразы.',
+    detailed: 'Раскрой предыдущий ответ подробнее, добавь только важные детали.',
+    regenerate: 'Ответь на тот же вопрос заново, другими словами.'
   }[message.action] || 'Уточни ответ кратко.';
   const previousAnswer = normalizeSelection(message.previousAnswer).slice(0, 2000);
   const context = previousAnswer ? `Исходный фрагмент:\n${original}\n\nПредыдущий ответ:\n${previousAnswer}` : `Исходный фрагмент:\n${original}`;
-  const settings = await getSettings();
-  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId: message.requestId, text: original, mode: 'lite', autoCloseMs: settings.autoCloseMs, showFollowups: settings.showFollowups });
-  await runRequest(tabId, message.requestId, `${instruction}\n\n${context}`, message.action);
+  const target = requestSettings.translateLanguage || 'ru';
+  const localizedInstruction = message.action === 'translate' ? `Переведи исходный текст на язык «${languageLabel(target)}», сохрани смысл и краткость.` : instruction;
+  await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId: message.requestId, text: original, mode: 'lite', autoCloseMs: requestSettings.autoCloseMs, showFollowups: requestSettings.showFollowups, bubbleTheme: requestSettings.bubbleTheme });
+  await runRequest(tabId, message.requestId, applyUserPreferences(`${localizedInstruction}\n\n${context}`, requestSettings, message.action), message.action, undefined, requestSettings);
 }
 
-async function runRequest(tabId, requestId, prompt, kind) {
-  const settings = await getSettings();
+async function runRequest(tabId, requestId, prompt, kind, quickInput = prompt, settingsOverride = null) {
+  const settings = settingsOverride || await getSettings();
   const controller = new AbortController();
   activeRequests.set(requestId, controller);
   try {
-    const quick = tryQuickAnswer(prompt);
+    const quick = tryQuickAnswer(quickInput);
     if (quick !== null && kind === 'answer') {
       await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: quick, source: 'instant', mode: 'lite', autoCloseMs: settings.autoCloseMs, done: true });
+      await saveHistory(prompt, quick, 'instant', settings.historyLimit);
       return;
     }
     await runLite(tabId, requestId, prompt, settings, controller.signal);
@@ -145,7 +165,9 @@ async function runLite(tabId, requestId, prompt, settings, signal) {
         lastPush = now;
       }
     }
-    await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: cleanAnswer(answer), source: 'local', mode: 'lite', autoCloseMs: settings.autoCloseMs, done: true });
+    const cleaned = cleanAnswer(answer);
+    await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: cleaned, source: 'local', mode: 'lite', autoCloseMs: settings.autoCloseMs, done: true });
+    await saveHistory(prompt, cleaned, 'local', settings.historyLimit);
   } finally {
     try { session.destroy(); } catch {}
   }
@@ -155,7 +177,7 @@ async function getBaseSession(settings) {
   if (baseSession) return baseSession;
   if (!baseSessionPromise) {
     baseSessionPromise = (async () => {
-      const options = { initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT + depthInstruction(settings.depth) + styleInstruction(settings.answerStyle) }], ...(await samplingParams()) };
+      const options = { initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT + depthInstruction(settings.depth) }], ...(await samplingParams()) };
       const session = await LanguageModel.create(options);
       session.addEventListener?.('contextoverflow', () => {
         if (baseSession === session) { baseSession = null; baseSessionPromise = null; }
@@ -184,6 +206,32 @@ async function getLiteStatus() { const state = await getLiteAvailability(); retu
 async function sendToTab(tabId, payload) { try { await chrome.tabs.sendMessage(tabId, payload); } catch {} }
 async function sendError(tabId, requestId, error) { await sendToTab(tabId, { type: 'AIHINT_ERROR', requestId, message: friendlyError(error) }); }
 function normalizeSelection(text) { return String(text || '').replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n').trim(); }
+function applySelectionAction(text, action) {
+  const instructions = { explain: 'Объясни выделенный текст простыми словами.', translate: 'Переведи выделенный текст на настроенный целевой язык, сохрани смысл и тон.', summarize: 'Кратко перескажи главную мысль выделенного текста.', proofread: 'Исправь орфографические и грамматические ошибки. Верни только исправленный текст.' };
+  return instructions[action] ? `${instructions[action]}\n\n${text}` : text;
+}
+function applyUserPreferences(prompt, settings, action = '') {
+  const instructions = [];
+  if (settings.answerStyle === 'custom' && settings.customPrompt?.trim()) instructions.push(settings.customPrompt.trim().slice(0, 1000));
+  if (action === 'translate' || settings.answerStyle === 'translate') instructions.push(`Целевой язык перевода: ${languageLabel(settings.translateLanguage || 'ru')}.`);
+  else if (settings.responseLanguage && settings.responseLanguage !== 'auto') instructions.push(`Отвечай на языке: ${languageLabel(settings.responseLanguage)}.`);
+  return instructions.length ? `${instructions.join('\n')}\n\n${prompt}` : prompt;
+}
+function languageLabel(value) { return ({ru:'русский',en:'английский',es:'испанский',de:'немецкий',fr:'французский'})[value] || value; }
+function resolveAnswerStyle(settings, text) {
+  if (settings.answerStyle !== 'auto') return settings;
+  const value = String(text || '');
+  const codeLike = /(?:\b(?:const|let|var|function|class|return|import|export|def|print)\b|=>|[{};]{2,}|<\/?[a-z][^>]*>)/i.test(value);
+  const hasCyrillic = /[А-Яа-яЁё]/.test(value);
+  const words = value.trim().split(/\s+/).length;
+  return { ...settings, answerStyle: codeLike ? 'code' : !hasCyrillic && words >= 3 && /[A-Za-z]/.test(value) ? 'translate' : 'balanced' };
+}
+async function saveHistory(prompt, answer, source, limit = 40) {
+  if (!answer) return;
+  const { history = [] } = await chrome.storage.local.get({ history: [] });
+  history.unshift({ id: crypto.randomUUID(), prompt: String(prompt).slice(0, 4000), answer: String(answer).slice(0, 8000), source, createdAt: Date.now() });
+  await chrome.storage.local.set({ history: history.slice(0, Math.max(1, Math.min(50, Number(limit) || 40))) });
+}
 function buildPrompt(prompt, depth, style) { return `${depthInstruction(depth)}${styleInstruction(style)}\n\nSelected text or request:\n${prompt}`; }
 function depthInstruction(depth) {
   if (depth === 'short') return '\nKeep the final answer to one short line whenever possible.';
@@ -193,7 +241,7 @@ function depthInstruction(depth) {
 function styleInstruction(style) {
   if (style === 'study') return '\nTeach like a patient tutor: explain the key idea simply and guide the user through the reasoning. For homework, prefer a hint before a full solution.';
   if (style === 'code') return '\nFor programming questions, identify the exact issue and give the smallest useful fix. Include a short code snippet only when it helps.';
-  if (style === 'translate') return '\nTranslate the selected text into Russian while preserving meaning and tone. If the user requests another target language, use that language.';
+  if (style === 'translate') return '\nTranslate the selected text into the configured target language while preserving meaning and tone.';
   return '';
 }
 function cleanAnswer(text) { return String(text || '').replace(/^\s*(AI Hint|Ответ|Answer)\s*:\s*/i, '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim(); }

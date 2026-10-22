@@ -8,7 +8,7 @@
 
 **Detailed description:**
 
-Select a short passage on a web page and press Ctrl+Shift+Space to get a compact answer beside the text. AI Hint keeps the interaction small and focused, with Quick, Smart, and Deep response lengths; Ordinary, Study, Code, and Translate styles; and optional Why, Example, and Simpler follow-ups.
+Select a short passage on a web page and press Ctrl+Shift+Space to get a compact answer beside the text. AI Hint also summarizes the main content of the current page when requested and keeps a searchable local history of recent answers. Choose Quick, Smart, or Deep response lengths; Ordinary, Study, Code, Translate, Auto, or custom styles; and use follow-ups such as Why, Example, Simpler, Shorter, and More detail.
 
 Lite uses Chrome's built-in on-device AI when your browser and device support it. It needs no provider API key. Pro lets you choose OpenAI, Google Gemini, Anthropic Claude, DeepSeek, or Yandex AI Studio and use your own key. AI Hint asks for optional network access for the provider you choose. A separate offline arithmetic game is included.
 
@@ -37,3 +37,13 @@ Lite has no Pro switch, API-key field, provider implementation, or optional host
 ## Submission status
 
 The repository contains the listing draft, privacy policy, local package script, and a README screenshot. The extension has **not** been submitted to the Chrome Web Store. Submission requires the owner's signed-in developer dashboard and accurate account-level declarations; Google reviews and approves the listing.
+
+## Screenshots to capture
+
+Capture after loading the exact ZIP edition being submitted, so the toolbar icon and edition-specific popup match the listing. Use 1280×800 or 640×400 PNG or JPEG captures at 16:10. Suggested set:
+
+1. **Ask while reading:** a regular article with a short phrase selected and the AI Hint answer bubble visible.
+2. **Choose the kind of help:** the popup showing response length and answer style.
+3. **Make it yours:** the settings page showing Lite/Pro selection and behavior controls. For Lite, show only its local AI status and response controls.
+
+Keep actual page content neutral and copyright-safe. Do not show API keys, personal data, browser error pages, or UI elements from unrelated extensions. Store screenshots must be real captures of the built extension; do not use mockups as product screenshots.

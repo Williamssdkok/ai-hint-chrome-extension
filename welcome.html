@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7fc">
+  <title>Начало работы · AI Hint</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+<body>
+  <main>
+    <header><div class="mark" aria-hidden="true">✦</div><div><span class="eyebrow">РАДЫ ВАС ВИДЕТЬ</span><h1>AI Hint</h1></div><span class="edition" id="edition">LITE</span></header>
+    <section class="hero"><span class="spark" aria-hidden="true">✦</span><h2>Ответ рядом с тем,<br>что вы читаете.</h2><p>Выделите фрагмент на странице — AI Hint поможет разобраться, перевести или найти нужное объяснение.</p></section>
+    <section class="steps" aria-label="Как пользоваться">
+      <article><span class="number">01</span><div><h3>Выделите текст</h3><p>Слово, абзац или условие задачи на обычной веб-странице.</p></div></article>
+      <article><span class="number">02</span><div><h3>Вызовите AI Hint</h3><p><kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> или правый клик → «спросить о выделенном».</p></div></article>
+      <article><span class="number">03</span><div><h3>Настройте под себя</h3><p>Выберите стиль и длину ответа. В Lite текст обрабатывается встроенным AI Chrome.</p></div></article>
+    </section>
+    <section class="tip"><span aria-hidden="true">✧</span><p id="editionTip">Lite не требует API-ключа. Первый запуск локальной модели может занять время.</p></section>
+    <footer><button id="settings" class="secondary" type="button">Настройки</button><button id="start" class="primary" type="button">Понятно, начать <span aria-hidden="true">→</span></button></footer>
+    <p class="privacy">Вызывайте помощника только для выделенного вами фрагмента. <a id="privacy" href="PRIVACY.md">Как обрабатываются данные</a></p>
+  </main>
+  <script src="welcome.js"></script>
+</body>
+</html>

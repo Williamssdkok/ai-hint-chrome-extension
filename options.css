@@ -65,6 +65,12 @@ input, select {
   outline: 0; color: #283149; background: #fff; font-size: 11px; font-weight: 500;
   transition: border-color .15s, box-shadow .15s;
 }
+textarea { width: 100%; resize: vertical; min-height: 82px; padding: 10px 11px; border: 1px solid #e1e6f0; border-radius: 10px; outline: 0; color: #283149; background: #fff; font-family: inherit; font-size: 11px; line-height: 1.5; }
+textarea:focus-visible { border-color: #9caaff; box-shadow: 0 0 0 3px rgba(86,108,242,.12); }
+label[hidden] { display: none; }
+.preference-grid { margin-top: 14px; }
+.theme-select { max-width: 320px; margin-top: 15px; }
+.diagnostics p { margin: 7px 0 0; color: #78839a; font-size: 11px; }
 input::placeholder { color: #a0a8b7; }
 input:focus-visible, select:focus-visible { border-color: #9caaff; box-shadow: 0 0 0 3px rgba(86,108,242,.12); }
 .permission { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 13px; padding: 11px 12px; border: 1px solid #eceff6; border-radius: 11px; color: #707b91; background: #f8f9fc; font-size: 10px; line-height: 1.45; }

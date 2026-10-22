@@ -16,10 +16,12 @@
       <div class="grid">
         <label for="answerStyle">Режим
           <select id="answerStyle">
+            <option value="auto">Авто — определить код или иностранный язык</option>
             <option value="balanced">Обычный — коротко и по делу</option>
             <option value="study">Учёба — объясняет как наставник</option>
             <option value="code">Код — помогает найти и исправить ошибку</option>
-            <option value="translate">Перевод — на русский, с сохранением смысла</option>
+            <option value="translate">Перевод — на выбранный язык</option>
+            <option value="custom">Мой пресет — собственная инструкция</option>
           </select>
         </label>
         <label for="depth">Длина ответа
@@ -27,6 +29,11 @@
         </label>
       </div>
       <p class="hint" id="styleInfo" aria-live="polite">Короткий ответ без лишнего текста.</p>
+      <label class="full" id="customPromptWrap" for="customPrompt" hidden>Моя инструкция<textarea id="customPrompt" maxlength="1000" rows="3" placeholder="Например: объясняй как ребёнку и отвечай только по-русски"></textarea></label>
+      <div class="grid preference-grid">
+        <label for="responseLanguage">Язык ответа<select id="responseLanguage"><option value="auto">Авто — как в тексте</option><option value="ru">Русский</option><option value="en">English</option><option value="es">Español</option><option value="de">Deutsch</option><option value="fr">Français</option></select></label>
+        <label for="translateLanguage">Переводить на<select id="translateLanguage"><option value="ru">Русский</option><option value="en">English</option><option value="es">Español</option><option value="de">Deutsch</option><option value="fr">Français</option></select></label>
+      </div>
     </section>
     <section class="card">
       <h3>Поведение</h3>
@@ -36,8 +43,11 @@
         </label>
         <label class="check"><input type="checkbox" id="followups"> Показывать «Почему? / Пример / Проще»</label>
       </div>
+      <label class="theme-select" for="bubbleTheme">Тема бабла<select id="bubbleTheme"><option value="auto">Как в системе</option><option value="light">Светлая</option><option value="dark">Тёмная</option></select></label>
+      <label class="theme-select" for="maxSelectionChars">Максимум текста за запрос<select id="maxSelectionChars"><option value="2000">2 000 символов</option><option value="4000">4 000 символов</option><option value="8000">8 000 символов</option><option value="12000">12 000 символов</option></select></label>
     </section>
     <section class="card statusCard"><div><h3>Chrome AI</h3><p id="status">Проверяю доступность…</p></div><button id="check" type="button">Проверить</button></section>
+    <section class="card diagnostics"><h3>Диагностика</h3><p id="shortcutDiagnostic">Горячая клавиша: проверяю…</p></section>
     <div class="actions"><button class="save" id="save" type="button">Сохранить настройки</button><span id="saved" role="status"></span></div>
     <footer>Работает с локальной моделью Chrome, если она доступна на устройстве. Рекламных трекеров и аналитики нет.</footer>
   </main>

@@ -6,10 +6,10 @@ Pick Ordinary, Study, Code, or Translate in the popup or settings. Adjust answer
 
 ## Install
 
-1. Download `ai-hint-lite-1.0.0.zip` from the GitHub Actions package artifact.
+1. Download `ai-hint-lite-1.2.0.zip` from the GitHub Actions package artifact.
 2. Unzip it into its own folder.
 3. Open `chrome://extensions`, enable **Developer mode**, and select **Load unpacked**.
-4. Select the unzipped AI Hint Lite folder.
+4. Select the unzipped AI Hint Lite folder. A short welcome page opens after installation.
 5. Select text on a regular web page and press `Ctrl+Shift+Space`.
 
 AI Hint Lite requires Chrome 138 or newer and a device that supports Chrome's built-in AI. Chrome may need to download its local model before the first answer. If the model is unavailable, the extension explains that; it does not fall back to a cloud provider.

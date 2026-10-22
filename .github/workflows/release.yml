@@ -1,0 +1,32 @@
+name: Package GitHub release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+      - name: Validate permissions and JavaScript
+        run: node scripts/validate.mjs
+      - name: Build and verify tagged edition
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          $version = $tag.Substring(1)
+          $manifest = Get-Content manifest.json -Raw | ConvertFrom-Json
+          if ($manifest.version -ne $version) { throw "Tag $tag does not match AI Hint version $($manifest.version)" }
+          ./scripts/package.ps1 -Edition Standard
+      - name: Publish ZIP on GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/ai-hint-chrome-extension-*.zip | Select-Object -ExpandProperty FullName) --generate-notes --title $env:GITHUB_REF_NAME
