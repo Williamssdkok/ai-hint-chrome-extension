@@ -2,6 +2,12 @@
 
 This is a working list; priorities may change based on feedback.
 
+## Shipped in 2.3.0
+
+- [x] Add Ordinary, Study, Code, and Translate answer styles to the popup and settings.
+- [x] Package a separate AI Hint Lite edition with no provider code, API-key controls, or cloud-provider permissions.
+- [x] Give both editions matching interactive controls and build artifacts.
+
 ## Next
 
 - [ ] Capture a full-size Chrome Web Store screenshot of the selection bubble and settings page (1280×800 or 640×400).

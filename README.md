@@ -24,6 +24,7 @@ If the shortcut is already in use, set another one at `chrome://extensions/short
 - Choose **Lite** for local Chrome AI, when available.
 - Choose **Pro** to select a provider, enter your own API key, and grant that provider's optional network access.
 - Set answer depth to Quick, Smart, or Deep.
+- Choose an answer style: **Ordinary**, **Study**, **Code**, or **Translate**.
 - In settings, choose the bubble auto-close time and whether to show follow-up buttons.
 - Open the popup and choose **Играть · Математический блиц** to play offline.
 
@@ -35,11 +36,11 @@ AI Hint does not include analytics or telemetry. It reads the text you explicitl
 
 ## Project status
 
-Current version: **2.2.1**. See [the roadmap](ROADMAP.md) for planned work and [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md) for listing copy and the submission checklist.
+Current version: **2.3.0**. Choose between the standard edition and [AI Hint Lite](editions/lite/README.md). Lite ships without provider code, an API-key field, or network permissions for cloud AI. See [the roadmap](ROADMAP.md) and [Chrome Web Store preparation](docs/CHROME_WEB_STORE.md).
 
 ## Development
 
-The project is a dependency-free Manifest V3 extension. Each push and pull request builds a clean ZIP package and runs a secret scan. On GitHub, download the `ai-hint-chrome-extension` artifact from the **Actions** run to get the package.
+The project is a dependency-free Manifest V3 extension. Each push and pull request builds ZIPs for both editions and runs a secret scan. On GitHub, download the `ai-hint-editions` artifact from the **Actions** run to get them.
 
 ## License
 

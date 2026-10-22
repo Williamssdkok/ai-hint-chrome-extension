@@ -1,0 +1,47 @@
+{
+  "manifest_version": 3,
+  "name": "AI Hint Lite",
+  "version": "1.0.0",
+  "description": "A compact helper for selected text with Chrome's on-device AI. No API key, cloud provider, or internet permission required.",
+  "minimum_chrome_version": "138",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "commands",
+    "contextMenus"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "AI Hint Lite",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "commands": {
+    "ask-hint": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Space",
+        "mac": "MacCtrl+Shift+Space"
+      },
+      "description": "Ask AI Hint Lite about selected text"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

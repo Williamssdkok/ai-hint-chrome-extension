@@ -1,1 +1,95 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Hint — Настройки</title><link rel="stylesheet" href="options.css"></head><body><main><header><div class="brand"><span>✦</span><div><h1>AI HINT</h1><p>Настройки</p></div></div><div class="badge">v2.2.1</div></header><section class="hero"><h2>Маленький помощник, не ещё один чат.</h2><p>Выдели небольшой фрагмент → Ctrl + Shift + Space → получи короткий точный ответ.</p></section><section class="card"><h3>Режим</h3><div class="seg" id="mode"><button data-value="lite">AI HINT LITE</button><button data-value="pro">AI HINT PRO</button></div><p class="hint" id="liteInfo">Lite использует встроенный в Chrome локальный AI (Gemini Nano), когда он доступен. API-ключ не нужен.</p></section><section class="card" id="proCard"><h3>Pro провайдер</h3><div class="grid"><label>Провайдер<select id="provider"><option value="openai">OpenAI</option><option value="gemini">Google Gemini</option><option value="claude">Claude</option><option value="deepseek">DeepSeek</option><option value="yandex">Yandex AI Studio</option></select></label><label>Модель<input id="model" autocomplete="off"></label><label class="full">API key<input id="key" type="password" autocomplete="off" placeholder="Вставь свой ключ"></label></div><div class="permission"><span id="permissionText">Сетевой доступ к провайдеру выдаётся только для выбранного API.</span><button id="grant">Разрешить API</button></div></section><section class="card"><h3>Ответ</h3><div class="grid"><label>Глубина<select id="depth"><option value="short">Quick — одна строка</option><option value="smart">Smart — 1–3 предложения</option><option value="deep">Deep — коротко, но с шагами</option></select></label><label>Автозакрытие<select id="autoclose"><option value="6000">6 секунд</option><option value="10000">10 секунд</option><option value="15000">15 секунд</option></select></label></div><label class="check"><input type="checkbox" id="followups"> Показывать «Почему? / Пример / Проще»</label></section><section class="card statusCard"><div><h3>Lite status</h3><p id="status">Проверяю…</p></div><button id="check">Проверить</button></section><div class="actions"><button class="save" id="save">Сохранить</button><span id="saved"></span></div><footer>Lite: локально в Chrome. Pro: запрос уходит только выбранному провайдеру. AI Hint не собирает телеметрию.</footer></main><script type="module" src="options.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7ff">
+  <title>AI Hint — Настройки</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand"><span aria-hidden="true">✦</span><div><h1>AI HINT</h1><p>Настройки помощника</p></div></div>
+<div class="badge">v2.3.0</div>
+    </header>
+
+    <section class="hero">
+      <h2>Помощь по выделенному тексту</h2>
+      <p>Выбери подходящий режим, настрой длину ответа — и продолжай читать, учиться или работать.</p>
+    </section>
+
+    <section class="card">
+      <h3>Источник ответа</h3>
+      <div class="seg" id="mode" role="group" aria-label="Режим AI Hint">
+        <button type="button" data-value="lite">AI HINT LITE</button>
+        <button type="button" data-value="pro">AI HINT PRO</button>
+      </div>
+      <p class="hint" id="liteInfo">Lite использует встроенный в Chrome локальный AI, если он доступен на этом устройстве. API-ключ не нужен.</p>
+    </section>
+
+    <section class="card">
+      <h3>Стиль ответа</h3>
+      <div class="grid">
+        <label for="answerStyle">Режим
+          <select id="answerStyle">
+            <option value="balanced">Обычный — коротко и по делу</option>
+            <option value="study">Учёба — объясняет как наставник</option>
+            <option value="code">Код — помогает найти и исправить ошибку</option>
+            <option value="translate">Перевод — на русский, с сохранением смысла</option>
+          </select>
+        </label>
+        <label for="depth">Длина ответа
+          <select id="depth">
+            <option value="short">Quick — одна строка</option>
+            <option value="smart">Smart — 1–3 предложения</option>
+            <option value="deep">Deep — коротко, с шагами</option>
+          </select>
+        </label>
+      </div>
+      <p class="hint" id="styleInfo" aria-live="polite">Короткий ответ без лишнего текста.</p>
+    </section>
+
+    <section class="card" id="proCard">
+      <h3>Pro-провайдер</h3>
+      <div class="grid">
+        <label for="provider">Провайдер
+          <select id="provider">
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="claude">Claude</option>
+            <option value="deepseek">DeepSeek</option>
+            <option value="yandex">Yandex AI Studio</option>
+          </select>
+        </label>
+        <label for="model">Модель<input id="model" autocomplete="off"></label>
+        <label class="full" for="key">API-ключ<input id="key" type="password" autocomplete="off" placeholder="Вставь свой ключ"></label>
+      </div>
+      <div class="permission"><span id="permissionText">Сетевой доступ запрашивается только для выбранного API.</span><button id="grant" type="button">Разрешить API</button></div>
+    </section>
+
+    <section class="card">
+      <h3>Поведение</h3>
+      <div class="grid">
+        <label for="autoclose">Закрывать ответ через
+          <select id="autoclose">
+            <option value="6000">6 секунд</option>
+            <option value="10000">10 секунд</option>
+            <option value="15000">15 секунд</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="followups"> Показывать кнопки «Почему? / Пример / Проще»</label>
+      </div>
+    </section>
+
+    <section class="card statusCard">
+      <div><h3>Локальный AI</h3><p id="status">Проверяю доступность…</p></div>
+      <button id="check" type="button">Проверить</button>
+    </section>
+
+    <div class="actions"><button class="save" id="save" type="button">Сохранить настройки</button><span id="saved" role="status"></span></div>
+    <footer>Lite обрабатывает запрос на устройстве. В Pro текст отправляется только выбранному провайдеру. Телеметрии нет.</footer>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

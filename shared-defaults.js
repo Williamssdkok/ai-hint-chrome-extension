@@ -4,6 +4,7 @@
 export const DEFAULTS = {
   mode: 'lite',
   depth: 'smart',
+  answerStyle: 'balanced',
   provider: 'openai',
   models: {
     openai: 'gpt-5-mini',

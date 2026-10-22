@@ -42,7 +42,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   // prompt at creation time. If depth (or mode) changes, that session is
   // stale — drop it so the next Lite request builds a fresh one instead
   // of silently answering with the old Quick/Smart/Deep behavior.
-  if (changes.depth || changes.mode) {
+  if (changes.depth || changes.mode || changes.answerStyle) {
     try { baseSession?.destroy(); } catch {}
     baseSession = null;
     baseSessionPromise = null;
@@ -206,7 +206,7 @@ async function runLite(tabId, requestId, prompt, settings, signal) {
   const base = await getBaseSession(settings);
   const session = await base.clone();
   try {
-    const promptText = buildPrompt(prompt, settings.depth);
+    const promptText = buildPrompt(prompt, settings.depth, settings.answerStyle);
     const stream = session.promptStreaming(promptText, { signal });
     let answer = '';
     let lastPush = 0;
@@ -231,7 +231,7 @@ async function getBaseSession(settings) {
   if (!baseSessionPromise) {
     baseSessionPromise = (async () => {
       const options = {
-        initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT + depthInstruction(settings.depth) }],
+        initialPrompts: [{ role: 'system', content: SYSTEM_PROMPT + depthInstruction(settings.depth) + styleInstruction(settings.answerStyle) }],
         ...(await samplingParams())
       };
       const session = await LanguageModel.create(options);
@@ -285,7 +285,7 @@ async function runPro(tabId, requestId, prompt, settings, signal) {
     return;
   }
   await ensureProviderPermission(provider);
-  const answer = await fetchProvider(provider, key, settings.models?.[provider], prompt, settings.depth, signal);
+  const answer = await fetchProvider(provider, key, settings.models?.[provider], prompt, settings.depth, settings.answerStyle, signal);
   await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: cleanAnswer(answer), source: provider, mode: 'pro', autoCloseMs: settings.autoCloseMs, done: true });
 }
 
@@ -296,8 +296,8 @@ async function ensureProviderPermission(provider) {
   if (!granted) throw new Error(`Chrome ещё не разрешил сетевой доступ к ${providerLabel(provider)}. Открой настройки и включи провайдера.`);
 }
 
-async function fetchProvider(provider, key, model, prompt, depth, signal) {
-  const system = SYSTEM_PROMPT + depthInstruction(depth);
+async function fetchProvider(provider, key, model, prompt, depth, answerStyle, signal) {
+  const system = SYSTEM_PROMPT + depthInstruction(depth) + styleInstruction(answerStyle);
   const maxTokens = depth === 'deep' ? 700 : depth === 'short' ? 180 : 360;
   const retryable = new Set([429, 500, 502, 503, 504]);
 
@@ -422,8 +422,15 @@ function normalizeSelection(text) {
   return String(text || '').replace(/\u00a0/g, ' ').replace(/\r\n/g, '\n').trim();
 }
 
-function buildPrompt(prompt, depth) {
-  return `${depthInstruction(depth)}\n\nUser request / selected text:\n${prompt}`;
+function buildPrompt(prompt, depth, answerStyle) {
+  return `${depthInstruction(depth)}${styleInstruction(answerStyle)}\n\nUser request / selected text:\n${prompt}`;
+}
+
+function styleInstruction(style) {
+  if (style === 'study') return '\nTeach like a patient tutor: explain the key idea in simple language and guide the user through the reasoning. For homework, prefer a hint before giving a full solution.';
+  if (style === 'code') return '\nFor programming questions, identify the exact issue and give the smallest useful fix. Include a short code snippet only when it helps.';
+  if (style === 'translate') return '\nTranslate the selected text into Russian while preserving its meaning and tone. If the user explicitly requests another target language, use that language.';
+  return '';
 }
 
 function depthInstruction(depth) {

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f5f7ff">
+  <title>AI Hint Lite — Настройки</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header><div class="brand"><span aria-hidden="true">✦</span><div><h1>AI HINT LITE</h1><p>Локальный помощник Chrome</p></div></div><div class="badge">БЕЗ API-КЛЮЧА</div></header>
+    <section class="hero"><h2>Умная помощь на устройстве</h2><p>Выбери режим ответа и настрой поведение. AI Hint Lite не подключается к облачным AI-провайдерам и не просит API-ключ.</p></section>
+    <section class="card">
+      <h3>Стиль ответа</h3>
+      <div class="grid">
+        <label for="answerStyle">Режим
+          <select id="answerStyle">
+            <option value="balanced">Обычный — коротко и по делу</option>
+            <option value="study">Учёба — объясняет как наставник</option>
+            <option value="code">Код — помогает найти и исправить ошибку</option>
+            <option value="translate">Перевод — на русский, с сохранением смысла</option>
+          </select>
+        </label>
+        <label for="depth">Длина ответа
+          <select id="depth"><option value="short">Quick — одна строка</option><option value="smart">Smart — 1–3 предложения</option><option value="deep">Deep — коротко, с шагами</option></select>
+        </label>
+      </div>
+      <p class="hint" id="styleInfo" aria-live="polite">Короткий ответ без лишнего текста.</p>
+    </section>
+    <section class="card">
+      <h3>Поведение</h3>
+      <div class="grid">
+        <label for="autoclose">Закрывать ответ через
+          <select id="autoclose"><option value="6000">6 секунд</option><option value="10000">10 секунд</option><option value="15000">15 секунд</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="followups"> Показывать «Почему? / Пример / Проще»</label>
+      </div>
+    </section>
+    <section class="card statusCard"><div><h3>Chrome AI</h3><p id="status">Проверяю доступность…</p></div><button id="check" type="button">Проверить</button></section>
+    <div class="actions"><button class="save" id="save" type="button">Сохранить настройки</button><span id="saved" role="status"></span></div>
+    <footer>Работает с локальной моделью Chrome, если она доступна на устройстве. Рекламных трекеров и аналитики нет.</footer>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
