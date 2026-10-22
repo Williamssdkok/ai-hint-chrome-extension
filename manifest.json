@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Hint",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": "Get fast answers about selected text, summarize pages, and save a searchable local answer history.",
   "minimum_chrome_version": "138",
   "permissions": [
@@ -40,7 +40,6 @@
       },
       "description": "Ask AI Hint about the selected text"
     },
-    "style-balanced": { "suggested_key": { "default": "Ctrl+Shift+1", "mac": "MacCtrl+Shift+1" }, "description": "Switch AI Hint to Ordinary style" },
     "style-study": { "suggested_key": { "default": "Ctrl+Shift+2", "mac": "MacCtrl+Shift+2" }, "description": "Switch AI Hint to Study style" },
     "style-code": { "suggested_key": { "default": "Ctrl+Shift+3", "mac": "MacCtrl+Shift+3" }, "description": "Switch AI Hint to Code style" },
     "style-translate": { "suggested_key": { "default": "Ctrl+Shift+4", "mac": "MacCtrl+Shift+4" }, "description": "Switch AI Hint to Translate style" }

@@ -33,7 +33,6 @@
       },
       "description": "Ask AI Hint Lite about selected text"
     },
-    "style-balanced": { "suggested_key": { "default": "Ctrl+Shift+1", "mac": "MacCtrl+Shift+1" }, "description": "Switch AI Hint Lite to Ordinary style" },
     "style-study": { "suggested_key": { "default": "Ctrl+Shift+2", "mac": "MacCtrl+Shift+2" }, "description": "Switch AI Hint Lite to Study style" },
     "style-code": { "suggested_key": { "default": "Ctrl+Shift+3", "mac": "MacCtrl+Shift+3" }, "description": "Switch AI Hint Lite to Code style" },
     "style-translate": { "suggested_key": { "default": "Ctrl+Shift+4", "mac": "MacCtrl+Shift+4" }, "description": "Switch AI Hint Lite to Translate style" }

@@ -14,7 +14,7 @@ This is a working list; priorities may change based on feedback.
 - [x] Add a tag-based GitHub Release workflow for reviewed Standard and Lite ZIPs.
 - [x] Add a repeatable release checklist and a troubleshooting guide.
 
-## Shipped in 2.5.0 / Lite 1.2.0
+## Shipped in 2.5.1 / Lite 1.2.0
 
 - [x] Keep a searchable, copyable local history of the latest 40 answers.
 - [x] Add shorter, more detailed, regenerate, why, example, simpler, and copy actions to the answer bubble.

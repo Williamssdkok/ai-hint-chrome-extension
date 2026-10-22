@@ -27,6 +27,7 @@ assert(sameMembers(lite.permissions, standardPermissions), 'Lite permissions cha
 assert(sameMembers(standard.optional_host_permissions, providerOrigins), 'Standard optional host permissions changed; review them.');
 assert(!lite.optional_host_permissions, 'Lite must not request provider host permissions.');
 assert(standard.commands?.['ask-hint'] && lite.commands?.['ask-hint'], 'Both editions need the ask shortcut.');
+assert(Object.keys(standard.commands || {}).length <= 4 && Object.keys(lite.commands || {}).length <= 4, 'Chrome supports at most four extension commands.');
 
 const liteBackground = await readFile('editions/lite/background-lite.js', 'utf8');
 assert(!/api\.openai\.com|generativelanguage\.googleapis\.com|api\.anthropic\.com|api\.deepseek\.com|ai\.api\.cloud\.yandex\.net|\bfetch\s*\(/i.test(liteBackground), 'Lite background must remain cloud-free.');
