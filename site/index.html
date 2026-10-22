@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f5ff">
+  <meta name="description" content="AI Hint — помощник для Chrome. Выдели текст, задай вопрос и получи понятный ответ рядом со страницей.">
+  <title>AI Hint — умная помощь прямо в Chrome</title>
+  <link rel="icon" href="../icons/icon48.png" type="image/png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="AI Hint — на главную"><span class="brand-icon">✦</span><span>AI HINT</span></a>
+    <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">Меню</button>
+    <nav id="main-nav" aria-label="Главная навигация">
+      <a href="#about">О проекте</a><a href="#how">Как пользоваться</a><a href="#privacy">Приватность</a><a href="#author">Автор</a>
+    </nav>
+    <a class="nav-cta" href="https://github.com/Williamssdkok/ai-hint-chrome-extension">Открыть на GitHub <span>↗</span></a>
+  </header>
+
+  <main id="top">
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><i></i> ПОМОЩНИК ДЛЯ CHROME</div>
+        <h1>Понять сложное.<br><em>Продолжить своё.</em></h1>
+        <p class="lead">Выдели фрагмент на странице — AI Hint объяснит его простыми словами, поможет с переводом или подскажет по коду. Ответ появится рядом с текстом.</p>
+        <div class="hero-actions"><a class="button primary" href="https://github.com/Williamssdkok/ai-hint-chrome-extension">Посмотреть проект <span>↗</span></a><a class="button quiet" href="#how">Как это работает <span>↓</span></a></div>
+        <div class="hero-note"><span class="pulse"></span> Локальный режим включён по умолчанию · API-ключ не нужен</div>
+      </div>
+      <div class="hero-art" aria-label="Маскот AI Hint рядом с примером ответа" role="img">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="sparkle s1">✦</div><div class="sparkle s2">✧</div>
+        <svg class="character" viewBox="0 0 270 330" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs><linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b8a9ff"/><stop offset="1" stop-color="#706ce8"/></linearGradient><linearGradient id="coat" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fbfbff"/><stop offset="1" stop-color="#dce3ff"/></linearGradient></defs>
+          <ellipse cx="138" cy="301" rx="75" ry="15" fill="#4d53b7" opacity=".12"/>
+          <path d="M70 184Q38 219 50 280l22 23 28-12-2-82M198 183q34 37 20 96l-23 24-27-13 4-82" fill="url(#hair)" stroke="#625fc4" stroke-width="4"/>
+          <path d="M79 210q-27 13-28 65l26 17 20-14-3-61M187 209q28 14 29 66l-26 17-20-14 3-61" fill="#a79aff"/>
+          <path d="M76 197q12-34 61-34 48 0 61 35l18 86q-38 30-79 30-49 0-79-30z" fill="url(#coat)" stroke="#8a8be1" stroke-width="4"/>
+          <path d="m117 188 20 28 20-28 19 13-15 99h-49l-14-99z" fill="#7777e8"/><path d="m119 191 18 25 19-25-9-13h-20z" fill="#fff"/>
+          <path d="M74 91q-1-65 65-66 67 1 66 72l-12 88-31-32H99l-25 34-13-55z" fill="url(#hair)" stroke="#625fc4" stroke-width="4"/>
+          <path d="M83 113q0-44 55-44 52 0 53 45v37q-1 43-55 50-51-7-53-50z" fill="#ffe5e3" stroke="#625fc4" stroke-width="3"/>
+          <path d="M77 112q0-67 55-70 45-3 66 29l-22-5-15-15q-18 30-79 37z" fill="url(#hair)"/><path d="M77 108q-18 35-8 68l17-25zM197 107q18 36 8 68l-17-25z" fill="#9285f4"/>
+          <ellipse cx="115" cy="132" rx="7" ry="10" fill="#45457d"/><ellipse cx="158" cy="132" rx="7" ry="10" fill="#45457d"/><circle cx="117" cy="129" r="2.5" fill="white"/><circle cx="160" cy="129" r="2.5" fill="white"/>
+          <path d="M128 159q8 7 16 0" fill="none" stroke="#d77d91" stroke-width="3" stroke-linecap="round"/><path d="M100 147q-10-5-17 0M175 147q10-5 17 0" stroke="#f3a1a4" stroke-width="5" stroke-linecap="round" opacity=".65"/>
+          <path d="m72 80-12-19 25 2M192 59l18-12-3 29" fill="#d6ceff" stroke="#625fc4" stroke-width="3"/>
+          <path d="m134 6 4 12 12 4-12 4-4 12-4-12-12-4 12-4z" fill="#ffcf73"/>
+        </svg>
+        <div class="answer-card"><span class="mini-brand"><i>✦</i> AI HINT</span><b>Вот простое объяснение</b><span>Главная мысль — в двух коротких предложениях.</span><small>ЛОКАЛЬНЫЙ РЕЖИМ · CHROME AI</small></div>
+        <div class="art-caption">Твоя спутница в мире открытых вкладок <span>✧</span></div>
+      </div>
+      <div class="scroll-hint">ЛИСТАЙ НИЖЕ <span>↓</span></div>
+    </section>
+
+    <section class="intro section wrap" id="about">
+      <div class="section-label">01 / ЧТО ЭТО</div><div class="section-main"><h2>Не ещё один чат.<br><em>Помощь в нужный момент.</em></h2><p>AI Hint — расширение для Chrome, которое помогает разобраться с тем, что уже перед тобой. Не нужно копировать текст в отдельную вкладку: выдели предложение, фрагмент кода или незнакомое слово и выбери действие.</p><p>Мы строим проект вокруг простой идеи: технологии должны помогать понять материал, а не отвлекать от него.</p></div>
+    </section>
+
+    <section class="modes section wrap">
+      <div class="section-label">02 / ДВА РЕЖИМА</div><div class="mode-grid">
+        <article class="mode-card local"><div class="mode-kicker"><span class="status-dot"></span> ОСНОВНОЙ · БЕЗ КЛЮЧА</div><h3>AI Hint</h3><p>Локальный AI Chrome отвечает прямо на устройстве. Подходит для объяснений, учебных вопросов, кратких пересказов и перевода — если встроенная модель доступна на твоём компьютере.</p><ul><li>Текст остаётся на устройстве</li><li>Не нужен аккаунт AI-провайдера</li><li>Бесплатно для использования</li></ul><span class="mode-tag">LOCAL · CHROME AI</span></article>
+        <article class="mode-card pro"><div class="mode-kicker"><span class="pro-dot"></span> ДОПОЛНИТЕЛЬНО · НА ТВОИХ УСЛОВИЯХ</div><h3>AI Hint Pro</h3><p>Подключи свой API-ключ в настройках, если нужен ответ от облачного провайдера или локальная модель Chrome недоступна. Режим использует выбранного тобой поставщика AI.</p><ul><li>Провайдеры на выбор</li><li>Ключ хранится в настройках расширения</li><li>Тарифы и обработка — по правилам провайдера</li></ul><span class="mode-tag">ОПЦИОНАЛЬНЫЙ РЕЖИМ</span></article>
+      </div>
+    </section>
+
+    <section class="how section wrap" id="how">
+      <div class="section-label">03 / НАЧАТЬ ПРОСТО</div><div class="section-main"><h2>Три шага.<br><em>И ты снова в тексте.</em></h2>
+        <div class="steps"><article><span>01</span><div><h3>Скачай и распакуй проект</h3><p>Открой репозиторий AI Hint на GitHub, нажми Code → Download ZIP и распакуй архив в отдельную папку.</p></div></article><article><span>02</span><div><h3>Подключи расширение в Chrome</h3><p>Открой <kbd>chrome://extensions</kbd>, включи «Режим разработчика», нажми «Загрузить распакованное расширение» и выбери папку проекта с файлом manifest.json.</p></div></article><article><span>03</span><div><h3>Выдели фрагмент</h3><p>На обычной веб-странице выдели текст и нажми <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>Space</kbd> или выбери AI Hint в контекстном меню. Ответ можно уточнить или скопировать.</p></div></article></div>
+      </div>
+    </section>
+
+    <section class="features section wrap">
+      <div class="section-label">04 / ЧТО УЖЕ ЕСТЬ</div><div class="feature-grid"><article><span>✦</span><h3>Ответы рядом</h3><p>Небольшой бабл появляется рядом с выделенным текстом и не требует переключаться между вкладками.</p></article><article><span>⌕</span><h3>Нужный стиль</h3><p>Обычный ответ, режим учёбы, помощь с кодом, перевод или собственные инструкции.</p></article><article><span>◷</span><h3>История локально</h3><p>Последние ответы сохраняются на устройстве — их можно найти, скопировать или удалить.</p></article><article><span>▤</span><h3>Страница целиком</h3><p>Попроси коротко изложить главную мысль страницы с ограничением объёма текста.</p></article></div>
+    </section>
+
+    <section class="privacy section wrap" id="privacy"><div class="privacy-icon">⌑</div><div><div class="section-label">05 / ТВОЙ ТЕКСТ — ТВОЙ ВЫБОР</div><h2>Прозрачно о приватности.</h2><p>Расширение читает выделенный текст только после твоего действия. В локальном режиме запрос обрабатывается встроенной моделью Chrome; Pro отправляет его выбранному AI-провайдеру. Настройки и история хранятся в локальном хранилище браузера. В проекте нет аналитики и рекламы.</p><a href="https://github.com/Williamssdkok/ai-hint-chrome-extension/blob/main/PRIVACY.md">Полная политика приватности <span>↗</span></a></div></section>
+
+    <section class="author section wrap" id="author"><div class="section-label">06 / ОБ АВТОРЕ</div><div class="author-card"><div class="author-avatar">W<span>✦</span></div><div class="author-copy"><div class="eyebrow">СОЗДАТЕЛЬ AI HINT</div><h2>Williamssdkok</h2><p>Я развиваю AI Hint как практичный инструмент для браузера: продумываю функции, собираю обратную связь и постепенно превращаю прототип в цельный проект. Если нашёл ошибку, хочешь предложить идею или помочь развитию — буду рад твоему сообщению.</p><div class="socials"><a href="https://github.com/Williamssdkok/ai-hint-chrome-extension">GitHub проекта <span>↗</span></a><a href="https://github.com/Williamssdkok">Профиль автора <span>↗</span></a><a href="https://t.me/tasta228" target="_blank" rel="noopener noreferrer">Telegram <span>↗</span></a><a href="https://instagram.com/a1qwns" target="_blank" rel="noopener noreferrer">Instagram <span>↗</span></a></div></div></div></section>
+
+    <section class="closing wrap"><div><span class="eyebrow">AI HINT · ПРОЕКТ РАСТЁТ</span><h2>Маленький ответ.<br><em>Большая помощь.</em></h2><p>Попробуй расширение, посмотри исходный код или предложи, что улучшить дальше.</p><a class="button primary" href="https://github.com/Williamssdkok/ai-hint-chrome-extension">Перейти к AI Hint на GitHub <span>↗</span></a></div><span class="closing-star">✦</span></section>
+  </main>
+  <footer class="footer wrap"><a class="brand" href="#top"><span class="brand-icon">✦</span><span>AI HINT</span></a><span>Сделано с любопытством и желанием помогать.</span><a href="https://github.com/Williamssdkok/ai-hint-chrome-extension">Исходный код ↗</a><span>© <span id="year"></span> AI Hint</span></footer>
+  <script src="script.js"></script>
+</body>
+</html>

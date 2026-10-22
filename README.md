@@ -1,5 +1,7 @@
 # AI Hint
 
+Project website: [AI Hint](https://williamssdkok.github.io/ai-hint-chrome-extension/) (published with GitHub Pages after Pages is enabled for the repository).
+
 **A small, fast helper for selected text in Chrome.** Select a short fragment, press `Ctrl+Shift+Space`, and get a concise answer beside the text.
 
 AI Hint is one extension with two modes. The local mode is selected by default; Pro remains available in settings and the popup.
