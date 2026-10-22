@@ -14,9 +14,10 @@ This is a working list; priorities may change based on feedback.
 - [x] Add a tag-based GitHub Release workflow for reviewed Standard and Lite ZIPs.
 - [x] Add a repeatable release checklist and a troubleshooting guide.
 
-## Shipped in 2.6.0 / Lite 1.3.0
+## Shipped in 2.6.1 / Lite 1.3.1
 
-- [x] Keep a searchable, copyable local history of the latest 40 answers.
+- [x] Restyle both settings pages with the AI Hint website palette and system-aware dark theme; add a direct website link.
+- [x] Keep a searchable local buffer of 10 recent unpinned answers, with pins, copy/delete actions, and an opt-out setting.
 - [x] Add shorter, more detailed, regenerate, why, example, simpler, and copy actions to the answer bubble.
 - [x] Add custom answer instructions, response and translation language, automatic style detection, and bubble themes.
 - [x] Add context-menu actions, bounded page summaries, style shortcuts, provider diagnostics, and a user-triggered API key check.
