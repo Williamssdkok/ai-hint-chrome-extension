@@ -273,7 +273,9 @@
     copy.addEventListener('click', async () => {
       const answer = container.closest('.card')?.querySelector('.answer')?.textContent || '';
       if (!answer) return;
-      try { await navigator.clipboard.writeText(answer); copy.textContent = 'Готово ✓'; setTimeout(() => copy.textContent = 'Копировать', 900); } catch {}
+      const copied = await copyText(answer);
+      copy.textContent = copied ? 'Скопировано ✓' : 'Не удалось скопировать';
+      setTimeout(() => { if (copy.isConnected) copy.textContent = 'Копировать'; }, 1100);
     });
     container.appendChild(copy);
   }
@@ -285,6 +287,21 @@
     current = { requestId, rect: current?.rect || null, source: 'LOCAL', showFollowups: false, mode: current?.mode || 'lite', bubbleTheme: current?.bubbleTheme || 'auto' };
     showBubble({ requestId, rect: current.rect, loading: true, bubbleTheme: current.bubbleTheme });
     chrome.runtime.sendMessage({ type: 'AIHINT_SELECTED', requestId, text: lastRequest.original, action });
+  }
+
+  async function copyText(value) {
+    try { await navigator.clipboard.writeText(value); return true; } catch {
+      const field = document.createElement('textarea');
+      field.value = value;
+      field.setAttribute('readonly', '');
+      field.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.append(field);
+      field.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } catch {}
+      field.remove();
+      return copied;
+    }
   }
 
   function position(wrap, rect) {

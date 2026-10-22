@@ -8,20 +8,20 @@ AI Hint is a Chrome extension that answers questions about text you choose to se
 
 - **Selected text, page summaries, and follow-up prompts.** The extension reads selected text only after you invoke AI Hint. If you choose “Кратко о странице”, it reads up to the text limit you configure from the page's main content. It also uses the selection and the answer already shown when you request a follow-up.
 - **API keys and preferences.** If you enable Pro, the API key you enter, provider/model choice, response settings, and related preferences are saved in Chrome extension-local storage on your device.
-- **Answer history.** The most recent 40 prompts and answers are saved locally in Chrome extension storage. You can search, copy, delete individual items, or clear the history page.
+- **Answer history.** When “Save answer history” is enabled (on by default), AI Hint keeps up to 10 recent unpinned prompt-and-answer pairs in Chrome extension-local storage. You can pin entries so they are not automatically removed, search, copy, delete, or clear all unpinned entries. Each saved prompt and answer is limited to 5,000 characters. Turn history off in settings to stop saving new entries; existing entries remain until you delete them.
 - **Game score.** The offline arithmetic game saves its high score in Chrome extension-local storage.
 
 ## How information is processed
 
 - **Lite:** selected text and follow-up prompts are passed to Chrome's built-in on-device AI when it is available. AI Hint does not send these prompts to an AI provider in Lite mode.
 - **Pro:** selected text and follow-up prompts are sent directly from the extension to the AI provider you select (OpenAI, Google Gemini, Anthropic, DeepSeek, or Yandex AI Studio) so it can generate a response. Each provider processes information under its own terms and privacy policy. Review the selected provider's terms before using Pro, and do not submit sensitive information unless you are comfortable sharing it with that provider.
-- **Local storage:** settings, Pro API keys, answer history, and the game high score remain in Chrome's extension-local storage. They are not synced by AI Hint. Removing the extension or clearing its data removes this locally stored information.
+- **Local storage:** settings, Pro API keys, optional answer history, and the game high score remain in Chrome's extension-local storage on this device. The history toggle affects new entries only; it does not erase existing entries. They are not synced by AI Hint. Removing the extension or clearing its data removes this locally stored information.
 
 AI Hint does not receive prompts or answers on a developer-operated server. Its local history is visible only in your browser profile. It does not sell user information, use it for advertising, or allow the developer to read it. Chrome and the selected AI provider may process information according to their own terms.
 
 ## Data sharing and retention
 
-AI Hint shares selected text, page text for a requested summary, and follow-up prompts only with the selected AI provider when you use Pro. Provider-side retention, use, and deletion are governed by that provider's policies and account settings. Lite uses Chrome's on-device model. The extension maintains a bounded local history but no remote user database.
+AI Hint shares selected text, page text for a requested summary, and follow-up prompts only with the selected AI provider when you use Pro. Provider-side retention, use, and deletion are governed by that provider's policies and account settings. Lite uses Chrome's on-device model. If enabled, the extension maintains a bounded history only in local browser storage and has no remote user database.
 
 ## Permissions
 

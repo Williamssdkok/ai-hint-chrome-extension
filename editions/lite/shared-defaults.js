@@ -6,7 +6,8 @@ export const DEFAULTS = {
   responseLanguage: 'auto',
   translateLanguage: 'ru',
   bubbleTheme: 'auto',
-  historyLimit: 40,
+  historyLimit: 10,
+  historyEnabled: true,
   maxSelectionChars: 4000,
   autoCloseMs: 10000,
   showFollowups: true

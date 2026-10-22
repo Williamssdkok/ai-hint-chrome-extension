@@ -17,6 +17,7 @@ let settings = { ...DEFAULTS };
   $('#depth').value = settings.depth || 'smart';
   $('#autoclose').value = String(settings.autoCloseMs || 10000);
   $('#followups').checked = settings.showFollowups !== false;
+  $('#historyEnabled').checked = settings.historyEnabled !== false;
   $('#customPrompt').value = settings.customPrompt || '';
   $('#customPromptWrap').hidden = settings.answerStyle !== 'custom';
   $('#responseLanguage').value = settings.responseLanguage || 'auto';
@@ -57,6 +58,7 @@ async function save() {
     depth: $('#depth').value,
     autoCloseMs: Number($('#autoclose').value),
     showFollowups: $('#followups').checked,
+    historyEnabled: $('#historyEnabled').checked,
     customPrompt: $('#customPrompt').value.trim().slice(0, 1000),
     responseLanguage: $('#responseLanguage').value,
     translateLanguage: $('#translateLanguage').value,

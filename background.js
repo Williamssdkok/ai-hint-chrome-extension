@@ -21,6 +21,7 @@ let activeRequests = new Map();
 chrome.runtime.onInstalled.addListener(async (details) => {
   const current = await chrome.storage.local.get(DEFAULTS);
   await chrome.storage.local.set({ ...DEFAULTS, ...current });
+  await normalizeHistory();
   try { await chrome.contextMenus.removeAll(); } catch {}
   chrome.contextMenus.create({ id: 'ai-hint-selection', title: 'AI Hint', contexts: ['selection'] });
   for (const [id, title] of [['explain','Объяснить'],['rewrite','Улучшить черновик'],['translate','Перевести'],['summarize','Кратко пересказать'],['proofread','Исправить ошибки']]) {
@@ -203,7 +204,7 @@ async function handleFollowup(tabId, message) {
   const target = requestSettings.translateLanguage || 'ru';
   const localizedInstruction = action === 'translate' ? `Переведи исходный текст на язык «${languageLabel(target)}», сохрани смысл и краткость.` : instruction;
   await sendToTab(tabId, { type: 'AIHINT_LOADING', requestId, text: original, mode: requestSettings.mode, autoCloseMs: requestSettings.autoCloseMs, showFollowups: requestSettings.showFollowups, bubbleTheme: requestSettings.bubbleTheme });
-  await runRequest(tabId, requestId, applyUserPreferences(`${localizedInstruction}\n\n${context}`, requestSettings, action), action, undefined, requestSettings);
+  await runRequest(tabId, requestId, applyUserPreferences(`${localizedInstruction}\n\n${context}`, requestSettings, action), action, original, requestSettings);
 }
 
 async function runRequest(tabId, requestId, prompt, kind, quickInput = prompt, settingsOverride = null) {
@@ -214,21 +215,21 @@ async function runRequest(tabId, requestId, prompt, kind, quickInput = prompt, s
     const quick = tryQuickAnswer(quickInput);
     if (quick !== null && kind === 'answer') {
       await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: quick, source: 'instant', mode: settings.mode, autoCloseMs: settings.autoCloseMs, done: true });
-      await saveHistory(prompt, quick, 'instant', settings.historyLimit);
+      await saveHistory(quickInput, quick, 'instant', settings.mode, settings);
       return;
     }
 
     if (settings.mode === 'lite') {
-      await runLite(tabId, requestId, prompt, settings, controller.signal);
+      await runLite(tabId, requestId, prompt, settings, controller.signal, quickInput);
     } else {
-      await runPro(tabId, requestId, prompt, settings, controller.signal);
+      await runPro(tabId, requestId, prompt, settings, controller.signal, quickInput);
     }
   } finally {
     activeRequests.delete(requestId);
   }
 }
 
-async function runLite(tabId, requestId, prompt, settings, signal) {
+async function runLite(tabId, requestId, prompt, settings, signal, historyPrompt = prompt) {
   const availability = await getLiteAvailability();
   if (availability === 'unavailable') {
     await sendToTab(tabId, {
@@ -259,7 +260,7 @@ async function runLite(tabId, requestId, prompt, settings, signal) {
     }
     answer = cleanAnswer(answer);
     await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer, source: 'local', mode: 'lite', autoCloseMs: settings.autoCloseMs, done: true });
-    await saveHistory(prompt, answer, 'local', settings.historyLimit);
+    await saveHistory(historyPrompt, answer, 'local', 'local', settings);
   } finally {
     try { session.destroy(); } catch {}
   }
@@ -316,7 +317,7 @@ async function getLiteStatus() {
   return { available: state !== 'unavailable', state };
 }
 
-async function runPro(tabId, requestId, prompt, settings, signal) {
+async function runPro(tabId, requestId, prompt, settings, signal, historyPrompt = prompt) {
   const provider = settings.provider;
   const key = settings.keys?.[provider];
   if (!key) {
@@ -328,7 +329,7 @@ async function runPro(tabId, requestId, prompt, settings, signal) {
     partial => sendToTab(tabId, { type: 'AIHINT_STREAM', requestId, answer: partial, source: provider, mode: 'pro', autoCloseMs: settings.autoCloseMs }));
   const cleaned = cleanAnswer(answer);
   await sendToTab(tabId, { type: 'AIHINT_RESULT', requestId, answer: cleaned, source: provider, mode: 'pro', autoCloseMs: settings.autoCloseMs, done: true });
-  await saveHistory(prompt, cleaned, provider, settings.historyLimit);
+  await saveHistory(historyPrompt, cleaned, provider, 'pro', settings);
 }
 
 async function ensureProviderPermission(provider) {
@@ -515,11 +516,44 @@ function applySelectionAction(text, action) {
   return instructions[action] ? `${instructions[action]}\n\n${text}` : text;
 }
 
-async function saveHistory(prompt, answer, source, limit = 40) {
-  if (!answer) return;
+function limitHistoryText(value) {
+  const text = String(value ?? '');
+  return text.length <= 5000 ? text : `${text.slice(0, 4999)}…`;
+}
+
+function normalizeHistoryEntry(entry) {
+  return {
+    id: String(entry?.id || crypto.randomUUID()),
+    prompt: limitHistoryText(entry?.prompt),
+    answer: limitHistoryText(entry?.answer),
+    source: limitHistoryText(entry?.source || 'local'),
+    mode: entry?.mode === 'pro' ? 'pro' : 'lite',
+    style: limitHistoryText(entry?.style || 'balanced'),
+    pinned: entry?.pinned === true,
+    createdAt: Number(entry?.createdAt) || Date.now()
+  };
+}
+
+async function normalizeHistory() {
   const { history = [] } = await chrome.storage.local.get({ history: [] });
-  history.unshift({ id: crypto.randomUUID(), prompt: String(prompt).slice(0, 4000), answer: String(answer).slice(0, 8000), source, createdAt: Date.now() });
-  await chrome.storage.local.set({ history: history.slice(0, Math.max(1, Math.min(50, Number(limit) || 40))) });
+  const entries = Array.isArray(history) ? history.map(normalizeHistoryEntry) : [];
+  const pinned = entries.filter(entry => entry.pinned);
+  const recent = entries.filter(entry => !entry.pinned).slice(0, 10);
+  await chrome.storage.local.set({ history: [...pinned, ...recent].sort((a, b) => b.createdAt - a.createdAt) });
+}
+
+async function saveHistory(prompt, answer, source, mode, settings) {
+  if (!answer || settings.historyEnabled === false) return;
+  const { history = [] } = await chrome.storage.local.get({ history: [] });
+  const entries = (Array.isArray(history) ? history : []).map(normalizeHistoryEntry);
+  const safePrompt = limitHistoryText(prompt);
+  const safeAnswer = limitHistoryText(answer);
+  const newest = entries[0];
+  if (newest?.prompt === safePrompt && newest?.answer === safeAnswer) return;
+  const next = normalizeHistoryEntry({ prompt: safePrompt, answer: safeAnswer, source, mode, style: settings.answerStyle, pinned: false, createdAt: Date.now() });
+  const pinned = entries.filter(entry => entry.pinned);
+  const recent = [next, ...entries.filter(entry => !entry.pinned)].slice(0, 10);
+  await chrome.storage.local.set({ history: [...pinned, ...recent].sort((a, b) => b.createdAt - a.createdAt) });
 }
 
 function applyUserPreferences(prompt, settings, action = '') {
